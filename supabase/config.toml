@@ -1,0 +1,20 @@
+project_id = "ziftwxvurtreqhzavywt"
+
+[functions.livekit-token]
+verify_jwt = false
+
+[functions.ai-cofounder-match]
+verify_jwt = false
+
+[functions.ai-improve-text]
+verify_jwt = false
+
+[functions.ai-job-match]
+verify_jwt = false
+
+[functions.ai-startup-assistant]
+verify_jwt = false
+
+[functions.cinetpay-webhook]
+verify_jwt = false
+

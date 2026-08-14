@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Union&#39;S — Connectez Talents, Startups &amp; Investisseurs</title>
+    <meta name="description" content="Union&#39;S est la plateforme de matching intelligente qui connecte talents, startups, investisseurs et partenaires.">
+    <meta name="author" content="Union'S" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" />
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og-image.jpg">
+    <meta property="og:title" content="Union&#39;S — Connectez Talents, Startups &amp; Investisseurs">
+  <meta name="twitter:title" content="Union&#39;S — Connectez Talents, Startups &amp; Investisseurs">
+  <meta property="og:description" content="Union&#39;S est la plateforme de matching intelligente qui connecte talents, startups, investisseurs et partenaires.">
+  <meta name="twitter:description" content="Union&#39;S est la plateforme de matching intelligente qui connecte talents, startups, investisseurs et partenaires.">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <!--
+      Filet de sécurité anti-écran-noir : indépendant de React, s'exécute même
+      si le bundle principal échoue à s'exécuter (variable d'environnement
+      manquante, erreur d'import, etc.). Sans ça, une exception avant le montage
+      de React produit un écran vide sans aucun indice pour l'utilisateur ni le
+      développeur. Retiré automatiquement dès que React a bien rendu du contenu.
+    -->
+    <script>
+      (function () {
+        var rootEl = document.getElementById("root");
+        var shown = false;
+
+        function showFallback(message) {
+          if (shown || (rootEl && rootEl.children.length > 0)) return;
+          shown = true;
+          document.body.style.background = "#0a0a0a";
+          document.body.innerHTML =
+            '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+            'gap:16px;padding:24px;text-align:center;font-family:system-ui,-apple-system,sans-serif;color:#fff;">' +
+            '<div style="font-size:20px;font-weight:700;">Union\'S n\'a pas pu démarrer</div>' +
+            '<div style="max-width:480px;font-size:14px;color:#aaa;white-space:pre-wrap;">' +
+            (message || "Une erreur est survenue avant le chargement de l'application.") +
+            "</div>" +
+            '<button onclick="location.reload()" style="margin-top:8px;padding:10px 20px;border-radius:8px;' +
+            'background:#D4A017;color:#000;font-weight:600;border:none;cursor:pointer;">Réessayer</button>' +
+            "</div>";
+        }
+
+        window.addEventListener("error", function (e) {
+          showFallback(e && e.message ? e.message : undefined);
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var msg = e && e.reason && e.reason.message ? e.reason.message : String(e && e.reason);
+          showFallback(msg);
+        });
+
+        // Filet de dernier recours : si rien n'a rendu de contenu après 6s,
+        // quelque chose s'est mal passé silencieusement (pas d'erreur JS captée).
+        setTimeout(function () {
+          if (rootEl && rootEl.children.length === 0) {
+            showFallback("Le chargement prend plus de temps que prévu. Vérifiez votre connexion ou contactez le support si le problème persiste.");
+          }
+        }, 6000);
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
