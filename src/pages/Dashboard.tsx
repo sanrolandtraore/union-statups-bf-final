@@ -12,7 +12,7 @@ const CofounderMatchTab = lazy(() => import("@/components/dashboard/CofounderMat
 const ExplorerTab = lazy(() => import("@/components/dashboard/ExplorerTab"));
 const ProjectsTab = lazy(() => import("@/components/dashboard/ProjectsTab"));
 const ContactsTab = lazy(() => import("@/components/dashboard/ContactsTab"));
-const SettingsTab = lazy(() => import("@/components/dashboard/SettingsTab"));
+const SettingsTab = lazy(() => import("@/components/dashboard/SettingsTabProduction"));
 const AdminTab = lazy(() => import("@/components/dashboard/AdminTab"));
 const BoostTab = lazy(() => import("@/components/dashboard/BoostTab"));
 const FundraisingTab = lazy(() => import("@/components/dashboard/FundraisingTab"));
@@ -28,12 +28,7 @@ const TabLoading = () => (
 const Dashboard = () => {
   usePresence();
   const { role } = useAuth();
-
-  const getDefaultTab = (): DashboardTab => {
-    if (role === "admin") return "admin";
-    return "home";
-  };
-
+  const getDefaultTab = (): DashboardTab => role === "admin" ? "admin" : "home";
   const [activeTab, setActiveTab] = useState<DashboardTab>(getDefaultTab());
 
   return (
