@@ -14,17 +14,27 @@ const AuthCallback = () => {
     const finish = async () => {
       const params = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-      const authError = params.get("error_description") || hash.get("error_description");
+      const authErrorRaw = params.get("error_description") || hash.get("error_description");
       const code = params.get("code");
+      const callbackType = params.get("type") || hash.get("type");
 
-      if (authError) {
-        if (mounted) setError(decodeURIComponent(authError.replace(/\+/g, " ")));
+      if (authErrorRaw) {
+        let message = authErrorRaw.replace(/\+/g, " ");
+        try {
+          message = decodeURIComponent(message);
+        } catch {
+          // Keep the original provider message when it is not valid URI encoding.
+        }
+        if (mounted) setError(message);
         return;
       }
 
+      // Password-recovery links should establish the session and then enter
+      // the dedicated reset screen, not the application dashboard.
+      const isPasswordRecovery = callbackType === "recovery";
+
       // Supabase PKCE callbacks return a one-time `code`. Exchange it before
-      // checking the session; otherwise email confirmation/reset links can
-      // appear successful while the browser has no authenticated session.
+      // checking the session so confirmation links reliably establish a session.
       if (code) {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
         if (!mounted) return;
@@ -32,7 +42,7 @@ const AuthCallback = () => {
           setError(exchangeError.message);
           return;
         }
-        navigate("/dashboard", { replace: true });
+        navigate(isPasswordRecovery ? "/reset-password" : "/dashboard", { replace: true });
         return;
       }
 
@@ -45,19 +55,21 @@ const AuthCallback = () => {
       }
 
       if (data.session) {
-        navigate("/dashboard", { replace: true });
+        navigate(isPasswordRecovery ? "/reset-password" : "/dashboard", { replace: true });
         return;
       }
 
       // Hash-based implicit-flow callbacks may be processed by the Supabase
-      // client automatically. Give the auth listener a moment to persist it.
+      // client automatically. Confirm that a user exists before continuing.
       const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (!mounted) return;
+
       if (userError || !userData.user) {
         setError(userError?.message || "La vérification n'a pas pu établir une session.");
         return;
       }
 
-      navigate("/dashboard", { replace: true });
+      navigate(isPasswordRecovery ? "/reset-password" : "/dashboard", { replace: true });
     };
 
     void finish();
