@@ -6,11 +6,8 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
-// Rate limiting : endpoint public sans authentification, protégé contre les
-// abus de quota/coût IA par une limite par adresse IP (fenêtre glissante).
 const RATE_LIMIT_MAX = 15;
-const RATE_LIMIT_WINDOW_SECONDS = 300; // 5 minutes
+const RATE_LIMIT_WINDOW_SECONDS = 300;
 
 async function checkRateLimit(supabaseAdmin: ReturnType<typeof createClient>, ip: string): Promise<boolean> {
   const bucketKey = `ai-startup-assistant:${ip}`;
@@ -24,9 +21,14 @@ async function checkRateLimit(supabaseAdmin: ReturnType<typeof createClient>, ip
 
   if ((count ?? 0) >= RATE_LIMIT_MAX) return false;
 
-  await supabaseAdmin.from("rate_limit_hits").insert({ bucket_key: bucketKey });
+  const { error } = await supabaseAdmin.from("rate_limit_hits").insert({ bucket_key: bucketKey });
+  if (error) {
+    // Fail closed when the abuse-control store is unavailable rather than
+    // accidentally exposing an unlimited paid AI endpoint.
+    console.error("AI rate-limit persistence failed:", error);
+    return false;
+  }
 
-  // Nettoyage opportuniste des anciennes entrées (best-effort, ne bloque jamais la requête).
   if (Math.random() < 0.05) {
     const cleanupBefore = new Date(Date.now() - 3600 * 1000).toISOString();
     void supabaseAdmin.from("rate_limit_hits").delete().lt("created_at", cleanupBefore);
@@ -57,15 +59,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Public assistant — no auth required (used on landing page).
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    if (!LOVABLE_API_KEY || !supabaseUrl || !serviceRoleKey) {
+      console.error("AI assistant server configuration is incomplete");
+      return new Response(JSON.stringify({ error: "Assistant IA temporairement indisponible." }), {
+        status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
     const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
       || req.headers.get("cf-connecting-ip")
       || "unknown";
@@ -77,34 +82,48 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages } = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: 'Corps de requête invalide.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    const messages = (body as { messages?: unknown })?.messages;
+    if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'Messages requis.' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // SECURITY: validate every message — only user/assistant roles allowed,
-    // reject prompt-injection attempts via role=system or oversized content.
     const MAX_MSG_LEN = 4000;
     const MAX_TOTAL_LEN = 20000;
     let totalLen = 0;
-    const sanitized = [];
+    const sanitized: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+
     for (const m of messages.slice(-20)) {
       if (!m || typeof m !== 'object') continue;
-      if (m.role !== 'user' && m.role !== 'assistant') {
+      const message = m as { role?: unknown; content?: unknown };
+      if (message.role !== 'user' && message.role !== 'assistant') {
         return new Response(JSON.stringify({ error: 'Rôle de message invalide.' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (typeof m.content !== 'string') continue;
-      const content = m.content.slice(0, MAX_MSG_LEN);
+      if (typeof message.content !== 'string') continue;
+
+      const content = message.content.slice(0, MAX_MSG_LEN);
+      if (totalLen + content.length > MAX_TOTAL_LEN) break;
       totalLen += content.length;
-      if (totalLen > MAX_TOTAL_LEN) break;
-      sanitized.push({ role: m.role, content });
+      sanitized.push({ role: message.role, content });
     }
-    const recentMessages = sanitized;
+
+    if (sanitized.length === 0) {
+      return new Response(JSON.stringify({ error: 'Aucun message exploitable.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const aiResponse = await fetch(AI_GATEWAY, {
       method: 'POST',
@@ -114,38 +133,43 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...recentMessages,
-        ],
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...sanitized],
       }),
     });
 
     if (!aiResponse.ok) {
-      const status = aiResponse.status;
-      if (status === 429) {
+      if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: 'Trop de requêtes, réessayez dans quelques instants.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (status === 402) {
+      if (aiResponse.status === 402) {
         return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), {
           status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error(`AI gateway error: ${status}`);
+      console.error(`AI gateway returned HTTP ${aiResponse.status}`);
+      return new Response(JSON.stringify({ error: 'Le service IA est temporairement indisponible.' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const aiData = await aiResponse.json();
-    const reply = aiData.choices?.[0]?.message?.content?.trim() || "Désolé, je n'ai pas pu générer de réponse.";
+    const reply = aiData?.choices?.[0]?.message?.content;
 
-    return new Response(JSON.stringify({ reply }), {
+    if (typeof reply !== 'string' || !reply.trim()) {
+      console.error("AI gateway returned an invalid response payload");
+      return new Response(JSON.stringify({ error: "Le service IA n'a pas fourni de réponse exploitable." }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ reply: reply.trim() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
     console.error('AI startup assistant error:', error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+    return new Response(JSON.stringify({ error: "Le service IA est temporairement indisponible." }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
