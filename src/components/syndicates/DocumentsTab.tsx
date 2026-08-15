@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Shield, Plus } from "lucide-react";
+import { FileText, Download, Shield, Plus, Upload, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface Props {
@@ -23,7 +23,11 @@ interface SyndicateDocument {
   is_confidential: boolean;
   uploaded_by: string;
   created_at: string;
+  downloadUrl?: string | null;
 }
+
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
+const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
 
 const DocumentsTab = ({ syndicateId, isLead, userId }: Props) => {
   const { t } = useTranslation();
@@ -31,7 +35,8 @@ const DocumentsTab = ({ syndicateId, isLead, userId }: Props) => {
   const [documents, setDocuments] = useState<SyndicateDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
-  const [uploadForm, setUploadForm] = useState({ title: "", document_type: "other", file_url: "" });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadForm, setUploadForm] = useState({ title: "", document_type: "other" });
   const [uploading, setUploading] = useState(false);
 
   const docTypeLabels: Record<string, string> = {
@@ -46,128 +51,119 @@ const DocumentsTab = ({ syndicateId, isLead, userId }: Props) => {
   };
 
   const fetchDocs = async () => {
-    const { data } = await supabase
-      .from("syndicate_documents")
-      .select("*")
-      .eq("syndicate_id", syndicateId)
-      .order("created_at", { ascending: false });
-    setDocuments((data as unknown as SyndicateDocument[]) || []);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("syndicate_documents")
+        .select("*")
+        .eq("syndicate_id", syndicateId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+
+      const withUrls = await Promise.all((data || []).map(async (doc) => {
+        if (!doc.file_url) return { ...(doc as unknown as SyndicateDocument), downloadUrl: null };
+        const { data: signed } = await supabase.storage.from("syndicate-documents").createSignedUrl(doc.file_url, 3600);
+        return { ...(doc as unknown as SyndicateDocument), downloadUrl: signed?.signedUrl || null };
+      }));
+      setDocuments(withUrls);
+    } catch (error) {
+      toast({ title: t("syndV2.documentsTab.error"), description: error instanceof Error ? error.message : "Impossible de charger les documents.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchDocs(); }, [syndicateId]);
+  useEffect(() => { void fetchDocs(); }, [syndicateId]);
 
   const handleUpload = async () => {
-    if (!uploadForm.title.trim() || !userId) return;
+    if (!uploadForm.title.trim() || !userId || !selectedFile) {
+      toast({ title: t("syndV2.documentsTab.error"), description: "Sélectionnez un fichier et renseignez son titre.", variant: "destructive" });
+      return;
+    }
+    if (!ALLOWED_TYPES.includes(selectedFile.type)) {
+      toast({ title: t("syndV2.documentsTab.error"), description: "Format de fichier non supporté.", variant: "destructive" });
+      return;
+    }
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      toast({ title: t("syndV2.documentsTab.error"), description: "Le fichier dépasse la limite de 25 Mo.", variant: "destructive" });
+      return;
+    }
+
     setUploading(true);
     try {
+      const extension = selectedFile.name.split(".").pop()?.toLowerCase() || "bin";
+      const path = `${syndicateId}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from("syndicate-documents").upload(path, selectedFile, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: selectedFile.type,
+      });
+      if (uploadError) throw uploadError;
+
       const { error } = await supabase.from("syndicate_documents").insert({
         syndicate_id: syndicateId,
-        title: uploadForm.title,
+        title: uploadForm.title.trim(),
         document_type: uploadForm.document_type,
-        file_url: uploadForm.file_url || null,
+        file_url: path,
         uploaded_by: userId,
         is_confidential: true,
       });
-      if (error) throw error;
+      if (error) {
+        await supabase.storage.from("syndicate-documents").remove([path]);
+        throw error;
+      }
+
       toast({ title: t("syndV2.documentsTab.toastAdded"), description: t("syndV2.documentsTab.toastAddedDesc", { title: uploadForm.title }) });
-      setUploadForm({ title: "", document_type: "other", file_url: "" });
+      setUploadForm({ title: "", document_type: "other" });
+      setSelectedFile(null);
       setShowUpload(false);
-      fetchDocs();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Une erreur est survenue.";
-      toast({ title: t("syndV2.documentsTab.error"), description: message, variant: "destructive" });
+      await fetchDocs();
+    } catch (error) {
+      toast({ title: t("syndV2.documentsTab.error"), description: error instanceof Error ? error.message : "Une erreur est survenue.", variant: "destructive" });
     } finally {
       setUploading(false);
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center py-8"><div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  }
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-foreground flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" /> {t("syndV2.documentsTab.heading")}
-        </h3>
-        {isLead && (
-          <Button variant="outline" size="sm" onClick={() => setShowUpload(!showUpload)}>
-            <Plus className="h-4 w-4 mr-1" /> {t("syndV2.documentsTab.add")}
-          </Button>
-        )}
+        <h3 className="font-display font-bold text-foreground flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> {t("syndV2.documentsTab.heading")}</h3>
+        {isLead && <Button variant="outline" size="sm" onClick={() => setShowUpload(!showUpload)}><Plus className="h-4 w-4 mr-1" /> {t("syndV2.documentsTab.add")}</Button>}
       </div>
 
       {showUpload && (
         <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <div className="space-y-1"><Label className="text-sm">{t("syndV2.documentsTab.titleLabel")}</Label><Input value={uploadForm.title} onChange={(e) => setUploadForm((p) => ({ ...p, title: e.target.value }))} className="bg-secondary border-border" /></div>
+          <div className="space-y-1"><Label className="text-sm">{t("syndV2.documentsTab.typeLabel")}</Label><Select value={uploadForm.document_type} onValueChange={(v) => setUploadForm((p) => ({ ...p, document_type: v }))}><SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(docTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select></div>
           <div className="space-y-1">
-            <Label className="text-sm">{t("syndV2.documentsTab.titleLabel")}</Label>
-            <Input value={uploadForm.title} onChange={(e) => setUploadForm((p) => ({ ...p, title: e.target.value }))} className="bg-secondary border-border" />
+            <Label className="text-sm">Fichier</Label>
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-border bg-secondary/40 p-4">
+              <Upload className="h-5 w-5 text-primary" />
+              <div className="min-w-0"><p className="text-sm font-medium text-foreground">{selectedFile?.name || "Choisir un fichier"}</p><p className="text-xs text-muted-foreground">PDF, Word, Excel, JPG, PNG ou WebP — 25 Mo max</p></div>
+              <input type="file" className="sr-only" accept="application/pdf,image/jpeg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} disabled={uploading} />
+            </label>
           </div>
-          <div className="space-y-1">
-            <Label className="text-sm">{t("syndV2.documentsTab.typeLabel")}</Label>
-            <Select value={uploadForm.document_type} onValueChange={(v) => setUploadForm((p) => ({ ...p, document_type: v }))}>
-              <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(docTypeLabels).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-sm">{t("syndV2.documentsTab.urlLabel")}</Label>
-            <Input value={uploadForm.file_url} onChange={(e) => setUploadForm((p) => ({ ...p, file_url: e.target.value }))} placeholder="https://..." className="bg-secondary border-border" />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowUpload(false)}>{t("syndV2.documentsTab.cancel")}</Button>
-            <Button size="sm" onClick={handleUpload} disabled={uploading} className="bg-gradient-gold text-primary-foreground font-semibold">
-              {uploading ? t("syndV2.documentsTab.adding") : t("syndV2.documentsTab.add")}
-            </Button>
-          </div>
+          <div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => setShowUpload(false)} disabled={uploading}>{t("syndV2.documentsTab.cancel")}</Button><Button size="sm" onClick={handleUpload} disabled={uploading} className="bg-gradient-gold text-primary-foreground font-semibold">{uploading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Téléversement...</> : <><Upload className="mr-2 h-4 w-4" />{t("syndV2.documentsTab.add")}</>}</Button></div>
         </div>
       )}
 
       {documents.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
-          <p className="text-muted-foreground">{t("syndV2.documentsTab.empty")}</p>
-          {isLead && <p className="text-xs text-muted-foreground mt-1">{t("syndV2.documentsTab.emptyHint")}</p>}
-        </div>
+        <div className="text-center py-12"><FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" /><p className="text-muted-foreground">{t("syndV2.documentsTab.empty")}</p>{isLead && <p className="text-xs text-muted-foreground mt-1">{t("syndV2.documentsTab.emptyHint")}</p>}</div>
       ) : (
         <div className="space-y-2">
           {documents.map((doc) => (
-            <div key={doc.id} className="rounded-lg border border-border bg-card p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">{doc.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Badge variant="outline" className="text-xs">{docTypeLabels[doc.document_type] || doc.document_type}</Badge>
-                    {doc.is_confidential && <Badge variant="outline" className="text-xs"><Shield className="h-3 w-3 mr-1" /> {t("syndV2.documentsTab.confidential")}</Badge>}
-                    <span className="text-xs text-muted-foreground">{new Date(doc.created_at).toLocaleDateString("fr-FR")}</span>
-                  </div>
-                </div>
-              </div>
-              {doc.file_url ? (
-                <a href={doc.file_url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" /> {t("syndV2.documentsTab.download")}</Button>
-                </a>
-              ) : (
-                <Badge variant="outline" className="text-muted-foreground">{t("syndV2.documentsTab.noFile")}</Badge>
-              )}
+            <div key={doc.id} className="rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3"><FileText className="h-5 w-5 shrink-0 text-muted-foreground" /><div className="min-w-0"><p className="truncate text-sm font-medium text-foreground">{doc.title}</p><div className="flex flex-wrap items-center gap-2 mt-0.5"><Badge variant="outline" className="text-xs">{docTypeLabels[doc.document_type] || doc.document_type}</Badge>{doc.is_confidential && <Badge variant="outline" className="text-xs"><Shield className="h-3 w-3 mr-1" /> {t("syndV2.documentsTab.confidential")}</Badge>}<span className="text-xs text-muted-foreground">{new Date(doc.created_at).toLocaleDateString("fr-FR")}</span></div></div></div>
+              {doc.downloadUrl ? <a href={doc.downloadUrl} target="_blank" rel="noopener noreferrer"><Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" /> {t("syndV2.documentsTab.download")}</Button></a> : <Badge variant="outline" className="text-muted-foreground">{t("syndV2.documentsTab.noFile")}</Badge>}
             </div>
           ))}
         </div>
       )}
 
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mt-4">
-        <p className="text-sm text-muted-foreground">
-          <Shield className="h-4 w-4 inline mr-1 text-primary" />
-          {t("syndV2.documentsTab.legalNote")}
-        </p>
-      </div>
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 mt-4"><p className="text-sm text-muted-foreground"><Shield className="h-4 w-4 inline mr-1 text-primary" />{t("syndV2.documentsTab.legalNote")}</p></div>
     </div>
   );
 };
