@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { FileUp, FileText, Image, Trash2, ExternalLink, Loader2 } from "lucide-react";
 
-const MAX_SIZE = 20 * 1024 * 1024;
-const ACCEPT = "image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv";
+const MAX_SIZE = 50 * 1024 * 1024;
+const ACCEPT = "*/*";
 
 type UploadItem = { name: string; path: string; size?: number; type?: string; uploadedAt?: string };
 
@@ -44,7 +44,7 @@ const ProfileUploads = ({ role }: { role: string | null }) => {
     event.target.value = "";
     if (!user || files.length === 0) return;
     const invalid = files.find((file) => file.size > MAX_SIZE);
-    if (invalid) return toast.error(`${invalid.name} dépasse la limite de 20 Mo.`);
+    if (invalid) return toast.error(`${invalid.name} dépasse la limite de 50 Mo.`);
     setUploading(true);
     try {
       for (const file of files) {
@@ -86,7 +86,7 @@ const ProfileUploads = ({ role }: { role: string | null }) => {
         <label className="flex cursor-pointer flex-col items-center justify-center gap-2 text-center">
           {uploading ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : <FileUp className="h-8 w-8 text-primary" />}
           <span className="font-medium">{uploading ? "Téléversement en cours…" : "Ajouter un ou plusieurs documents"}</span>
-          <span className="text-xs text-muted-foreground">Images, PDF, Word, Excel, PowerPoint, TXT, CSV · 20 Mo maximum par fichier</span>
+          <span className="text-xs text-muted-foreground">Tous les formats de fichiers acceptés · 50 Mo maximum par fichier</span>
           <input type="file" className="sr-only" multiple accept={ACCEPT} onChange={upload} disabled={uploading} />
         </label>
         <div className="mt-3 flex flex-wrap justify-center gap-2">{config.labels.map((label) => <Badge key={label} variant="outline">{label}</Badge>)}</div>
