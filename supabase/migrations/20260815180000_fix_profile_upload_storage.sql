@@ -34,7 +34,6 @@ drop policy if exists "profile files select own folder" on storage.objects;
 drop policy if exists "profile files update own folder" on storage.objects;
 drop policy if exists "profile files delete own folder" on storage.objects;
 
-authorize profile files insert
 create policy "profile files insert own folder"
 on storage.objects
 for insert
@@ -44,7 +43,6 @@ with check (
   and (storage.foldername(name))[1] = (select auth.uid()::text)
 );
 
-authorize profile files select
 create policy "profile files select own folder"
 on storage.objects
 for select
@@ -54,7 +52,6 @@ using (
   and (storage.foldername(name))[1] = (select auth.uid()::text)
 );
 
-authorize profile files update
 create policy "profile files update own folder"
 on storage.objects
 for update
@@ -68,7 +65,6 @@ with check (
   and (storage.foldername(name))[1] = (select auth.uid()::text)
 );
 
-authorize profile files delete
 create policy "profile files delete own folder"
 on storage.objects
 for delete
