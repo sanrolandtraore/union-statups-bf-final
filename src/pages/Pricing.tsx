@@ -73,9 +73,6 @@ const Pricing = () => {
         return;
       }
 
-      // A paid plan must always go through the server-side payment flow.
-      // Do not infer paid/free status from a missing price: a malformed pricing
-      // row must fail closed instead of allowing an unpaid activation.
       const isPaid = plan.name !== "free";
       const selectedPrice = billing === "monthly" ? plan.price_monthly : plan.price_yearly;
 
@@ -86,9 +83,6 @@ const Pricing = () => {
           return;
         }
 
-        // Payment via CinetPay is initiated server-side. The subscription is
-        // activated only after the provider confirmation is validated by the
-        // cinetpay-webhook function.
         const { data, error } = await supabase.functions.invoke("cinetpay-create-payment", {
           headers: { Authorization: `Bearer ${session.access_token}` },
           body: {
@@ -109,8 +103,6 @@ const Pricing = () => {
         return;
       }
 
-      // Free plan only: activation is still server-side and cannot be used to
-      // activate a paid plan without verified payment.
       const { data, error } = await supabase.functions.invoke("manage-subscription", {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { action: "subscribe", plan_id: plan.id, billing_cycle: billing },
@@ -137,11 +129,7 @@ const Pricing = () => {
           <ArrowLeft className="mr-2 h-4 w-4" /> Retour
         </Button>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="font-display text-4xl font-bold md:text-5xl">
             Des plans pour <span className="text-gradient-gold">chaque ambition</span>
           </h1>
@@ -151,20 +139,8 @@ const Pricing = () => {
         </motion.div>
 
         <div className="flex justify-center gap-2 mb-10">
-          <Button
-            variant={billing === "monthly" ? "default" : "outline"}
-            onClick={() => setBilling("monthly")}
-            className={billing === "monthly" ? "bg-gradient-gold text-primary-foreground" : ""}
-          >
-            Mensuel
-          </Button>
-          <Button
-            variant={billing === "yearly" ? "default" : "outline"}
-            onClick={() => setBilling("yearly")}
-            className={billing === "yearly" ? "bg-gradient-gold text-primary-foreground" : ""}
-          >
-            Annuel <Badge className="ml-2 bg-green-500/20 text-green-400">-17%</Badge>
-          </Button>
+          <Button variant={billing === "monthly" ? "default" : "outline"} onClick={() => setBilling("monthly")} className={billing === "monthly" ? "bg-gradient-gold text-primary-foreground" : ""}>Mensuel</Button>
+          <Button variant={billing === "yearly" ? "default" : "outline"} onClick={() => setBilling("yearly")} className={billing === "yearly" ? "bg-gradient-gold text-primary-foreground" : ""}>Annuel <Badge className="ml-2 bg-green-500/20 text-green-400">-17%</Badge></Button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
@@ -172,64 +148,17 @@ const Pricing = () => {
             const isCurrent = plan.name === planName;
             const price = billing === "monthly" ? plan.price_monthly : plan.price_yearly;
             const features = featureList[plan.name] || [];
-
             return (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative rounded-2xl border p-8 flex flex-col ${
-                  plan.name === "pro"
-                    ? "border-primary glow-gold scale-[1.02]"
-                    : "border-border"
-                }`}
-              >
-                {plan.name === "pro" && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-gold px-4 py-1 text-xs font-bold text-primary-foreground">
-                    ⭐ Le plus populaire
-                  </div>
-                )}
-
+              <motion.div key={plan.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className={`relative rounded-2xl border p-8 flex flex-col ${plan.name === "pro" ? "border-primary glow-gold scale-[1.02]" : "border-border"}`}>
+                {plan.name === "pro" && <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-gold px-4 py-1 text-xs font-bold text-primary-foreground">⭐ Le plus populaire</div>}
                 <div className="mb-6 flex items-center gap-3">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                    plan.name === "pro" ? "bg-gradient-gold text-primary-foreground" : "bg-primary/10 text-primary"
-                  }`}>
-                    {planIcons[plan.name]}
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-foreground">{plan.display_name}</h3>
-                    <p className="text-sm text-muted-foreground">{plan.description}</p>
-                  </div>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${plan.name === "pro" ? "bg-gradient-gold text-primary-foreground" : "bg-primary/10 text-primary"}`}>{planIcons[plan.name]}</div>
+                  <div><h3 className="font-display text-xl font-bold text-foreground">{plan.display_name}</h3><p className="text-sm text-muted-foreground">{plan.description}</p></div>
                 </div>
-
-                <div className="mb-6">
-                  <span className="text-3xl font-bold text-foreground">{formatPrice(price)}</span>
-                  {price > 0 && (
-                    <span className="text-muted-foreground">/{billing === "monthly" ? "mois" : "an"}</span>
-                  )}
-                </div>
-
-                <ul className="mb-8 flex-1 space-y-3">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <span className="text-foreground/80">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  className={
-                    plan.name === "pro"
-                      ? "w-full bg-gradient-gold text-primary-foreground font-semibold text-base py-3"
-                      : "w-full text-base py-3"
-                  }
-                  variant={plan.name === "pro" ? "default" : "outline"}
-                  disabled={isCurrent || loading === plan.id || plan.name === "free"}
-                  onClick={() => handleSubscribe(plan)}
-                >
-                  {loading === plan.id ? "Activation…" : isCurrent ? "Plan actuel" : plan.name === "free" ? "Gratuit" : "S'abonner"}
+                <div className="mb-6"><span className="text-3xl font-bold text-foreground">{formatPrice(price)}</span>{price > 0 && <span className="text-muted-foreground">/{billing === "monthly" ? "mois" : "an"}</span>}</div>
+                <ul className="mb-8 flex-1 space-y-3">{features.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span className="text-foreground/80">{f}</span></li>)}</ul>
+                <Button className={plan.name === "pro" ? "w-full bg-gradient-gold text-primary-foreground font-semibold text-base py-3" : "w-full text-base py-3"} variant={plan.name === "pro" ? "default" : "outline"} disabled={isCurrent || loading === plan.id} onClick={() => handleSubscribe(plan)}>
+                  {loading === plan.id ? "Activation…" : isCurrent ? "Plan actuel" : plan.name === "free" ? "Choisir Gratuit" : "S'abonner"}
                 </Button>
               </motion.div>
             );
