@@ -17,33 +17,9 @@ const planIcons: Record<string, React.ReactNode> = {
 };
 
 const featureList: Record<string, string[]> = {
-  free: [
-    "Profil complet",
-    "3 demandes de contact / mois",
-    "1 projet actif",
-    "Matching basique",
-    "Explorer limité",
-  ],
-  pro: [
-    "Tout du plan Gratuit",
-    "50 demandes de contact / mois",
-    "5 projets actifs",
-    "Matching détaillé avec scores",
-    "Explorer complet",
-    "Accès au Club d'investisseurs privés",
-    "Analytics de profil",
-    "Badge Pro vérifié",
-    "-20% sur les Boosts",
-  ],
-  business: [
-    "Tout du plan Pro",
-    "Contacts illimités",
-    "Projets illimités",
-    "Analytics avancé",
-    "Badge Business vérifié",
-    "-50% sur les Boosts",
-    "Support prioritaire 24/7",
-  ],
+  free: ["Profil complet", "3 demandes de contact / mois", "1 projet actif", "Matching basique", "Explorer limité"],
+  pro: ["Tout du plan Gratuit", "50 demandes de contact / mois", "5 projets actifs", "Matching détaillé avec scores", "Explorer complet", "Accès au Club d'investisseurs privés", "Analytics de profil", "Badge Pro vérifié", "-20% sur les Boosts"],
+  business: ["Tout du plan Pro", "Contacts illimités", "Projets illimités", "Analytics avancé", "Badge Business vérifié", "-50% sur les Boosts", "Support prioritaire 24/7"],
 };
 
 const formatPrice = (price: number) => {
@@ -128,21 +104,14 @@ const Pricing = () => {
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-8">
           <ArrowLeft className="mr-2 h-4 w-4" /> Retour
         </Button>
-
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-          <h1 className="font-display text-4xl font-bold md:text-5xl">
-            Des plans pour <span className="text-gradient-gold">chaque ambition</span>
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Commencez gratuitement, évoluez à votre rythme. Tous les plans incluent l'accès à l'écosystème Union'S.
-          </p>
+          <h1 className="font-display text-4xl font-bold md:text-5xl">Des plans pour <span className="text-gradient-gold">chaque ambition</span></h1>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">Commencez gratuitement, évoluez à votre rythme. Tous les plans incluent l'accès à l'écosystème Union'S.</p>
         </motion.div>
-
         <div className="flex justify-center gap-2 mb-10">
           <Button variant={billing === "monthly" ? "default" : "outline"} onClick={() => setBilling("monthly")} className={billing === "monthly" ? "bg-gradient-gold text-primary-foreground" : ""}>Mensuel</Button>
           <Button variant={billing === "yearly" ? "default" : "outline"} onClick={() => setBilling("yearly")} className={billing === "yearly" ? "bg-gradient-gold text-primary-foreground" : ""}>Annuel <Badge className="ml-2 bg-green-500/20 text-green-400">-17%</Badge></Button>
         </div>
-
         <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
           {plans.map((plan, i) => {
             const isCurrent = plan.name === planName;
@@ -158,7 +127,7 @@ const Pricing = () => {
                 <div className="mb-6"><span className="text-3xl font-bold text-foreground">{formatPrice(price)}</span>{price > 0 && <span className="text-muted-foreground">/{billing === "monthly" ? "mois" : "an"}</span>}</div>
                 <ul className="mb-8 flex-1 space-y-3">{features.map((f) => <li key={f} className="flex items-start gap-2 text-sm"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span className="text-foreground/80">{f}</span></li>)}</ul>
                 <Button className={plan.name === "pro" ? "w-full bg-gradient-gold text-primary-foreground font-semibold text-base py-3" : "w-full text-base py-3"} variant={plan.name === "pro" ? "default" : "outline"} disabled={isCurrent || loading === plan.id} onClick={() => handleSubscribe(plan)}>
-                  {loading === plan.id ? "Activation…" : isCurrent ? "Plan actuel" : plan.name === "free" ? "Choisir Gratuit" : "S'abonner"}
+                  {loading === plan.id ? "Traitement…" : isCurrent ? "Plan actuel" : plan.name === "free" ? "Choisir Gratuit" : "S'abonner"}
                 </Button>
               </motion.div>
             );
