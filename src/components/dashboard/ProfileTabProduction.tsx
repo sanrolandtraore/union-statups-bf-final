@@ -10,30 +10,68 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import ProfileUploads from "./ProfileUploads";
 
+type Profile = {
+  full_name?: string | null;
+  bio?: string | null;
+  city?: string | null;
+  website?: string | null;
+  linkedin_url?: string | null;
+};
+
+type RoleProfile = {
+  id?: string | null;
+  user_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  title?: string | null;
+  experience_years?: number | null;
+  skills?: string[] | null;
+  education?: string | null;
+  availability?: string | null;
+  github_url?: string | null;
+  company_name?: string | null;
+  sector?: string | null;
+  funding_stage?: string | null;
+  team_size?: number | null;
+  pitch?: string | null;
+  looking_for?: string[] | null;
+  fund_name?: string | null;
+  investment_focus?: string[] | null;
+  min_ticket?: number | null;
+  max_ticket?: number | null;
+  thesis?: string | null;
+  service_type?: string | null;
+  expertise?: string[] | null;
+  description?: string | null;
+};
+
 const ProfileTabProduction = () => {
   const { user, role } = useAuth();
-  const [profile, setProfile] = useState<Record<string, any> | null>(null);
-  const [roleProfile, setRoleProfile] = useState<Record<string, any> | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [roleProfile, setRoleProfile] = useState<RoleProfile | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
       const { data: base } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
-      setProfile(base);
+      setProfile(base as Profile | null);
       if (role && role !== "admin") {
         const table = `${role}_profiles` as "talent_profiles" | "startup_profiles" | "investor_profiles" | "partner_profiles";
         const { data } = await supabase.from(table).select("*").eq("user_id", user.id).maybeSingle();
-        setRoleProfile(data);
+        setRoleProfile(data as RoleProfile | null);
       }
     };
     void load();
   }, [user, role]);
 
-  const setBase = (key: string, value: unknown) => setProfile((p) => ({ ...(p || {}), [key]: value }));
-  const setRoleField = (key: string, value: unknown) => setRoleProfile((p) => ({ ...(p || {}), [key]: value }));
-  const arrayValue = (key: string) => Array.isArray(roleProfile?.[key]) ? roleProfile?.[key].join(", ") : String(roleProfile?.[key] || "");
-  const arrayChange = (key: string, value: string) => setRoleField(key, value.split(",").map((x) => x.trim()).filter(Boolean));
+  const setBase = (key: keyof Profile, value: string) => setProfile((p) => ({ ...(p || {}), [key]: value }));
+  const setRoleField = <K extends keyof RoleProfile>(key: K, value: RoleProfile[K]) => setRoleProfile((p) => ({ ...(p || {}), [key]: value }));
+  const arrayValue = (key: keyof RoleProfile) => {
+    const value = roleProfile?.[key];
+    return Array.isArray(value) ? value.join(", ") : String(value || "");
+  };
+  const arrayChange = (key: keyof RoleProfile, value: string) => setRoleField(key, value.split(",").map((x) => x.trim()).filter(Boolean));
 
   const save = async () => {
     if (!user) return;
