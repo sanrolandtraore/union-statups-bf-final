@@ -5,8 +5,7 @@ import DashboardLayout, { type DashboardTab } from "@/components/dashboard/Dashb
 import AIAssistant from "@/components/landing/AIAssistant";
 import HomeTab from "@/components/dashboard/home/HomeTab";
 
-// Keep the initial dashboard bundle small. Secondary modules load only when opened.
-const ProfileTab = lazy(() => import("@/components/dashboard/ProfileTab"));
+const ProfileTab = lazy(() => import("@/components/dashboard/ProfileTabProduction"));
 const MatchingTab = lazy(() => import("@/components/dashboard/MatchingTab"));
 const CofounderMatchTab = lazy(() => import("@/components/dashboard/CofounderMatchTab"));
 const ExplorerTab = lazy(() => import("@/components/dashboard/ExplorerTab"));
@@ -19,18 +18,12 @@ const FundraisingTab = lazy(() => import("@/components/dashboard/FundraisingTab"
 const InvestmentClubTab = lazy(() => import("@/components/dashboard/InvestmentClubTab"));
 const IncubationTab = lazy(() => import("@/components/incubation/IncubationTab"));
 
-const TabLoading = () => (
-  <div className="flex min-h-[240px] items-center justify-center" role="status" aria-live="polite">
-    <span className="text-sm text-muted-foreground">Chargement…</span>
-  </div>
-);
+const TabLoading = () => <div className="flex min-h-[240px] items-center justify-center" role="status" aria-live="polite"><span className="text-sm text-muted-foreground">Chargement…</span></div>;
 
 const Dashboard = () => {
   usePresence();
   const { role } = useAuth();
-  const getDefaultTab = (): DashboardTab => role === "admin" ? "admin" : "home";
-  const [activeTab, setActiveTab] = useState<DashboardTab>(getDefaultTab());
-
+  const [activeTab, setActiveTab] = useState<DashboardTab>(role === "admin" ? "admin" : "home");
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
       <Suspense fallback={<TabLoading />}>
@@ -52,5 +45,4 @@ const Dashboard = () => {
     </DashboardLayout>
   );
 };
-
 export default Dashboard;
