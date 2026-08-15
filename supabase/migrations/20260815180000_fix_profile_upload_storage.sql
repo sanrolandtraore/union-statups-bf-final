@@ -1,27 +1,15 @@
 -- Production-safe profile document storage.
--- Files are private and scoped to the authenticated user's UUID folder.
+-- Files remain private and scoped to the authenticated user's UUID folder.
+-- Profile uploads intentionally accept arbitrary file formats; application-level
+-- ownership and a 50 MiB size limit remain enforced by Storage and RLS.
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'profile-files',
   'profile-files',
   false,
-  20971520,
-  array[
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'text/plain',
-    'text/csv'
-  ]
+  52428800,
+  null
 )
 on conflict (id) do update set
   public = excluded.public,
