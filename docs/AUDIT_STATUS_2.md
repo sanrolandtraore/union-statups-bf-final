@@ -1,0 +1,1 @@
+This branch contains production Auth fixes and non-invasive diagnostics. Real Supabase/Vercel/payment validation remains required before production sign-off.
