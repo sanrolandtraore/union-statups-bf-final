@@ -8,12 +8,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
-// Eagerly load critical routes
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
-// Lazy load all other routes for code splitting
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
@@ -24,6 +22,7 @@ const Syndicates = lazy(() => import("./pages/Syndicates"));
 const CreateSyndicate = lazy(() => import("./pages/CreateSyndicate"));
 const SyndicateDetail = lazy(() => import("./pages/SyndicateDetail"));
 const DealDetail = lazy(() => import("./pages/DealDetail"));
+const DealRedirect = lazy(() => import("./pages/DealRedirect"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const PitchRooms = lazy(() => import("./pages/PitchRooms"));
 const PitchRoomLive = lazy(() => import("./pages/PitchRoomLive"));
@@ -50,7 +49,6 @@ const queryClient = new QueryClient({
 
 const PageLoader = () => <PageSkeleton />;
 
-
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -62,7 +60,6 @@ const App = () => (
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
-                {/* Alias historiques vers l'accueil */}
                 <Route path="/index" element={<Navigate to="/" replace />} />
                 <Route path="/index.html" element={<Navigate to="/" replace />} />
                 <Route path="/home" element={<Navigate to="/" replace />} />
@@ -82,12 +79,12 @@ const App = () => (
                 <Route path="/syndicates/create" element={<ProtectedRoute><CreateSyndicate /></ProtectedRoute>} />
                 <Route path="/syndicates/:id" element={<ProtectedRoute><SyndicateDetail /></ProtectedRoute>} />
                 <Route path="/syndicates/:id/deals/:dealId" element={<ProtectedRoute><DealDetail /></ProtectedRoute>} />
+                <Route path="/deals/:dealId" element={<ProtectedRoute><DealRedirect /></ProtectedRoute>} />
                 <Route path="/pitch-rooms" element={<ProtectedRoute><PitchRooms /></ProtectedRoute>} />
                 <Route path="/pitch-rooms/:id" element={<ProtectedRoute><PitchRoomLive /></ProtectedRoute>} />
                 <Route path="/pitch-rooms/:id/replay" element={<ProtectedRoute><PitchRoomReplay /></ProtectedRoute>} />
                 <Route path="/jobs" element={<Jobs />} />
                 <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
