@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import AboutSection from "@/components/landing/AboutSection";
@@ -14,7 +15,8 @@ import FAQSection from "@/components/landing/FAQSection";
 import StartupSchoolSection from "@/components/landing/StartupSchoolSection";
 import AccompagnementSection from "@/components/landing/AccompagnementSection";
 import Footer from "@/components/landing/Footer";
-import AIAssistant from "@/components/landing/AIAssistant";
+
+const AIAssistant = lazy(() => import("@/components/landing/AIAssistant"));
 
 const Index = () => {
   return (
@@ -35,7 +37,9 @@ const Index = () => {
       <FAQSection />
       <AccompagnementSection />
       <Footer />
-      <AIAssistant />
+      <Suspense fallback={null}>
+        <AIAssistant />
+      </Suspense>
     </div>
   );
 };
