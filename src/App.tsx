@@ -10,6 +10,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -64,6 +65,7 @@ const App = () => (
                 <Route path="/index.html" element={<Navigate to="/" replace />} />
                 <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/legal/:slug" element={<LegalPage />} />
