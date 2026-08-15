@@ -1,20 +1,21 @@
 project_id = "ziftwxvurtreqhzavywt"
 
+# All authenticated Edge Functions must pass Supabase JWT verification at the gateway.
+# The webhook remains public because CinetPay calls it server-to-server without a Supabase user JWT.
 [functions.livekit-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-cofounder-match]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-improve-text]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-job-match]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-startup-assistant]
-verify_jwt = false
+verify_jwt = true
 
 [functions.cinetpay-webhook]
 verify_jwt = false
-
