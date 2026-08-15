@@ -21,49 +21,83 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
+const fetchRole = async (userId: string): Promise<AppRole | null> => {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[Union'S] Unable to load user role:", error);
+    return null;
+  }
+
+  return data?.role ?? null;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRole = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setRole(data?.role ?? null);
-  };
-
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => fetchRole(session.user.id), 0);
-        } else {
-          setRole(null);
-        }
-        setLoading(false);
-      }
-    );
+    let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchRole(session.user.id);
+    const applySession = async (nextSession: Session | null) => {
+      if (!mounted) return;
+
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (!nextSession?.user) {
+        setRole(null);
+        setLoading(false);
+        return;
       }
+
+      const nextRole = await fetchRole(nextSession.user.id);
+      if (!mounted) return;
+
+      setRole(nextRole);
       setLoading(false);
+    };
+
+    const initialize = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("[Union'S] Unable to restore session:", error);
+      }
+
+      await applySession(data.session ?? null);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event !== "INITIAL_SESSION") {
+        void applySession(nextSession);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    void initialize();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("[Union'S] Sign out failed:", error);
+      throw error;
+    }
+
     setSession(null);
     setUser(null);
     setRole(null);
