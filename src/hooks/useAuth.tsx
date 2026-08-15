@@ -77,9 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (event !== "INITIAL_SESSION") {
+      if (event === "INITIAL_SESSION") return;
+
+      // Supabase advises not to perform additional awaited Supabase queries
+      // directly inside this callback. Defer role loading to the next task to
+      // avoid auth-lock contention during confirmation/sign-in flows.
+      setTimeout(() => {
         void applySession(nextSession);
-      }
+      }, 0);
     });
 
     void initialize();
