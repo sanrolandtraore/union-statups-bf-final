@@ -73,12 +73,22 @@ const Pricing = () => {
         return;
       }
 
-      const isPaid = (plan.price_monthly ?? 0) > 0 || (plan.price_yearly ?? 0) > 0;
+      // A paid plan must always go through the server-side payment flow.
+      // Do not infer paid/free status from a missing price: a malformed pricing
+      // row must fail closed instead of allowing an unpaid activation.
+      const isPaid = plan.name !== "free";
+      const selectedPrice = billing === "monthly" ? plan.price_monthly : plan.price_yearly;
 
       if (isPaid) {
-        // Paiement Mobile Money via CinetPay (Orange Money / Moov Money) —
-        // l'abonnement n'est activé qu'après confirmation du paiement,
-        // vérifiée côté serveur par la fonction cinetpay-webhook.
+        if (!(selectedPrice && selectedPrice > 0)) {
+          toast.error("Ce tarif n'est pas disponible pour la périodicité sélectionnée");
+          setLoading(null);
+          return;
+        }
+
+        // Payment via CinetPay is initiated server-side. The subscription is
+        // activated only after the provider confirmation is validated by the
+        // cinetpay-webhook function.
         const { data, error } = await supabase.functions.invoke("cinetpay-create-payment", {
           headers: { Authorization: `Bearer ${session.access_token}` },
           body: {
@@ -99,8 +109,8 @@ const Pricing = () => {
         return;
       }
 
-      // Plan gratuit uniquement : activation via la fonction serveur dédiée,
-      // qui refuse explicitement d'activer un plan payant sans paiement vérifié.
+      // Free plan only: activation is still server-side and cannot be used to
+      // activate a paid plan without verified payment.
       const { data, error } = await supabase.functions.invoke("manage-subscription", {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { action: "subscribe", plan_id: plan.id, billing_cycle: billing },
@@ -140,7 +150,6 @@ const Pricing = () => {
           </p>
         </motion.div>
 
-        {/* Billing toggle */}
         <div className="flex justify-center gap-2 mb-10">
           <Button
             variant={billing === "monthly" ? "default" : "outline"}
@@ -220,7 +229,7 @@ const Pricing = () => {
                   disabled={isCurrent || loading === plan.id || plan.name === "free"}
                   onClick={() => handleSubscribe(plan)}
                 >
-                  {loading === plan.id ? "Activation..." : isCurrent ? "Plan actuel" : plan.name === "free" ? "Gratuit" : "S'abonner"}
+                  {loading === plan.id ? "Activation…" : isCurrent ? "Plan actuel" : plan.name === "free" ? "Gratuit" : "S'abonner"}
                 </Button>
               </motion.div>
             );
