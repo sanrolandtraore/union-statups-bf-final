@@ -50,9 +50,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
+      setRole(null);
 
       if (!nextSession?.user) {
-        setRole(null);
         setLoading(false);
         return;
       }
@@ -78,7 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event !== "INITIAL_SESSION") {
-        void applySession(nextSession);
+        // Supabase recommends deferring additional Supabase calls outside the
+        // auth callback to avoid blocking the auth state-change transaction.
+        setTimeout(() => {
+          void applySession(nextSession);
+        }, 0);
       }
     });
 
