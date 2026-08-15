@@ -15,9 +15,24 @@ const AuthCallback = () => {
       const params = new URLSearchParams(window.location.search);
       const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const authError = params.get("error_description") || hash.get("error_description");
+      const code = params.get("code");
 
       if (authError) {
         if (mounted) setError(decodeURIComponent(authError.replace(/\+/g, " ")));
+        return;
+      }
+
+      // Supabase PKCE callbacks return a one-time `code`. Exchange it before
+      // checking the session; otherwise email confirmation/reset links can
+      // appear successful while the browser has no authenticated session.
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (!mounted) return;
+        if (exchangeError) {
+          setError(exchangeError.message);
+          return;
+        }
+        navigate("/dashboard", { replace: true });
         return;
       }
 
@@ -34,17 +49,21 @@ const AuthCallback = () => {
         return;
       }
 
+      // Hash-based implicit-flow callbacks may be processed by the Supabase
+      // client automatically. Give the auth listener a moment to persist it.
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) {
         setError(userError?.message || "La vérification n'a pas pu établir une session.");
         return;
       }
 
-      navigate("/auth", { replace: true });
+      navigate("/dashboard", { replace: true });
     };
 
     void finish();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [navigate]);
 
   if (error) {
