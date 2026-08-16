@@ -47,6 +47,7 @@ $$;
 
 REVOKE ALL ON FUNCTION public.can_view_contact_info(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.can_view_contact_info(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.can_view_contact_info(uuid) FROM anon;
 
 CREATE OR REPLACE FUNCTION public.get_public_profile(p_user_id uuid)
 RETURNS TABLE (
@@ -56,7 +57,6 @@ RETURNS TABLE (
   bio text,
   city text,
   is_verified boolean,
-  kyc_status text,
   badge_type text,
   website text,
   linkedin_url text,
@@ -74,7 +74,6 @@ AS $$
     p.bio,
     p.city,
     p.is_verified,
-    p.kyc_status,
     p.badge_type,
     CASE WHEN public.can_view_contact_info(p_user_id) THEN p.website ELSE NULL END,
     CASE WHEN public.can_view_contact_info(p_user_id) THEN p.linkedin_url ELSE NULL END,
@@ -90,3 +89,4 @@ $$;
 
 REVOKE ALL ON FUNCTION public.get_public_profile(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_profile(uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.get_public_profile(uuid) FROM anon;

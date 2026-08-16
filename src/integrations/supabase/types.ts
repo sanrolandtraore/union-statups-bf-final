@@ -2736,7 +2736,6 @@ export type Database = {
           contact_info_locked: boolean
           full_name: string
           is_verified: boolean
-          kyc_status: string
           linkedin_url: string
           user_id: string
           website: string
