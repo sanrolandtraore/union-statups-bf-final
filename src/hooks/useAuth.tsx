@@ -77,9 +77,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (event !== "INITIAL_SESSION") {
+      if (event === "INITIAL_SESSION") return;
+
+      // Supabase auth callbacks must stay lightweight. Defer the role query
+      // until after the auth state transaction has completed.
+      setTimeout(() => {
         void applySession(nextSession);
-      }
+      }, 0);
     });
 
     void initialize();
