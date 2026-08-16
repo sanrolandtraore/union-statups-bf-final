@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { LiveKitRoom, VideoConference, RoomAudioRenderer } from "@livekit/components-react";
-// @ts-expect-error - le package ne fournit pas de types pour son CSS
 import "@livekit/components-styles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

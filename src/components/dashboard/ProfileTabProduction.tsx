@@ -83,7 +83,9 @@ const ProfileTabProduction = () => {
       if (role && role !== "admin" && roleProfile) {
         const table = `${role}_profiles` as "talent_profiles" | "startup_profiles" | "investor_profiles" | "partner_profiles";
         const { id: _id, user_id: _uid, created_at: _created, updated_at: _updated, ...data } = roleProfile;
-        const { error } = await supabase.from(table).upsert({ ...data, user_id: user.id }, { onConflict: "user_id" });
+        // `table` is a dynamic union of 4 possible profile tables, each with a different column
+        // set; only the fields relevant to the current role are populated in `data` at runtime.
+        const { error } = await supabase.from(table).upsert({ ...data, user_id: user.id } as never, { onConflict: "user_id" });
         if (error) throw error;
       }
       toast.success("Profil sauvegardé avec succès.");

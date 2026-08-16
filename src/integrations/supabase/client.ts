@@ -18,7 +18,7 @@ if (!rawSupabaseUrl || !rawPublishableKey) {
  * We never fall back to another project or hard-code credentials.
  */
 const normalizeSupabaseUrl = (value: string): string => {
-  const trimmed = value.trim().replace(/^['\"]|['\"]$/g, '');
+  const trimmed = value.trim().replace(/^['"]|['"]$/g, '');
   const url = new URL(trimmed);
   const pathname = url.pathname.replace(/\/+$/, '');
 
@@ -32,7 +32,7 @@ const normalizeSupabaseUrl = (value: string): string => {
 };
 
 const SUPABASE_URL = normalizeSupabaseUrl(rawSupabaseUrl);
-const SUPABASE_PUBLISHABLE_KEY = rawPublishableKey.trim().replace(/^['\"]|['\"]$/g, '');
+const SUPABASE_PUBLISHABLE_KEY = rawPublishableKey.trim().replace(/^['"]|['"]$/g, '');
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

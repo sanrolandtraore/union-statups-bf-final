@@ -24,9 +24,16 @@ interface AiMatchDisplay {
   talent_user_id: string;
   match_score?: number;
   total_score?: number;
-  match_details?: { competences_match?: number; experience_fit?: number; culture_fit?: number } | null;
+  match_details?: {
+    competences_match?: number;
+    experience_fit?: number;
+    culture_fit?: number;
+    growth_potential?: number;
+    reasoning?: string;
+  } | null;
   full_name?: string;
   title?: string;
+  skills?: string[];
 }
 
 const typeLabels: Record<string, string> = {
@@ -74,7 +81,7 @@ const JobDetail = () => {
 
           const { data: recs } = await supabase.from("ai_job_recommendations")
             .select("*").eq("job_id", id).order("match_score", { ascending: false });
-          setAiMatches(recs || []);
+          setAiMatches((recs || []) as unknown as AiMatchDisplay[]);
         }
       }
     };

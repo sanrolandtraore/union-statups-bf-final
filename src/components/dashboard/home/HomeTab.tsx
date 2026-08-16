@@ -19,7 +19,12 @@ import type { LucideIcon } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-type PitchRoom = Database["public"]["Tables"]["pitch_rooms"]["Row"];
+type PitchRoom = Pick<Database["public"]["Tables"]["pitch_rooms"]["Row"], "id" | "title" | "scheduled_at" | "status">;
+type TalentProfileRow = Database["public"]["Tables"]["talent_profiles"]["Row"];
+type StartupProfileRow = Database["public"]["Tables"]["startup_profiles"]["Row"];
+type InvestorProfileRow = Database["public"]["Tables"]["investor_profiles"]["Row"];
+type PartnerProfileRow = Database["public"]["Tables"]["partner_profiles"]["Row"];
+type RoleProfile = Partial<TalentProfileRow> & Partial<StartupProfileRow> & Partial<InvestorProfileRow> & Partial<PartnerProfileRow>;
 
 interface Stat {
   label: string;
@@ -66,7 +71,7 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<ProfileRow | null>(null);
-  const [roleProfile, setRoleProfile] = useState<Record<string, unknown> | null>(null);
+  const [roleProfile, setRoleProfile] = useState<RoleProfile | null>(null);
   const [stats, setStats] = useState<Stat[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -90,10 +95,10 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
       // 2. Profil de rôle
       const roleTable = `${role}_profiles` as
         | "talent_profiles" | "startup_profiles" | "investor_profiles" | "partner_profiles";
-      let rp: Record<string, unknown> | null = null;
+      let rp: RoleProfile | null = null;
       if (role !== "admin") {
         const { data } = await supabase.from(roleTable).select("*").eq("user_id", user.id).maybeSingle();
-        rp = data;
+        rp = data as RoleProfile | null;
       }
 
       // 3. Stats par rôle (requêtes en parallèle)

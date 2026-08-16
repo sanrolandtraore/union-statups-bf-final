@@ -27,7 +27,14 @@ type SchoolContentItem = Database["public"]["Tables"]["startup_school_content"][
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type ServiceRequestRow = Database["public"]["Tables"]["service_requests"]["Row"];
-type EditableItem = Partial<LegalPage> | Partial<BlogPost> | Partial<FaqItem> | Partial<ResourceItem> | Partial<Mentor> | Partial<Program> | Partial<SchoolContentItem>;
+type EditableItem =
+  | ({ _type: "legal" } & Partial<LegalPage>)
+  | ({ _type: "blog"; tags_str?: string } & Partial<BlogPost>)
+  | ({ _type: "faq" } & Partial<FaqItem>)
+  | ({ _type: "resources" } & Partial<ResourceItem>)
+  | ({ _type: "mentors"; specialty_str?: string } & Partial<Mentor>)
+  | ({ _type: "programs"; tags_str?: string } & Partial<Program>)
+  | ({ _type: "school-content"; tags_str?: string } & Partial<SchoolContentItem>);
 
 type AdminSection = "moderation" | "legal" | "blog" | "faq" | "resources" | "mentors" | "programs" | "school-content" | "kyc" | "services";
 
@@ -267,13 +274,13 @@ const AdminTab = () => {
     fetchAll();
   };
 
-  const openEdit = (item: (Partial<LegalPage> | Partial<BlogPost> | Partial<FaqItem> | Partial<ResourceItem> | (Partial<Mentor> & { tags?: string[] }) | (Partial<Program> & { tags?: string[] }) | (Partial<SchoolContentItem> & { tags?: string[] })) & { specialty?: string[] }) => {
-    setEditItem({ ...item, tags_str: item.tags?.join(", ") || "", specialty_str: item.specialty?.join(", ") || "" });
+  const openEdit = (item: EditableItem & { tags?: string[]; specialty?: string[] }) => {
+    setEditItem({ ...item, tags_str: item.tags?.join(", ") || "", specialty_str: item.specialty?.join(", ") || "" } as unknown as EditableItem);
     setEditOpen(true);
   };
 
   const openNew = (type: AdminSection) => {
-    const defaults: Record<string, Record<string, unknown>> = {
+    const defaults: Record<string, EditableItem> = {
       legal: { _type: "legal", title: "", slug: "", content: "", meta_description: "", is_published: true },
       blog: { _type: "blog", title: "", slug: "", excerpt: "", content: "", category_id: "", is_published: false, meta_title: "", meta_description: "", tags_str: "", reading_time_min: 5 },
       faq: { _type: "faq", question: "", answer: "", category: "general", sort_order: 0, is_published: true },
