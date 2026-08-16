@@ -78,11 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event !== "INITIAL_SESSION") {
-        // Supabase recommends deferring additional Supabase calls outside the
-        // auth callback to avoid blocking the auth state-change transaction.
-        setTimeout(() => {
-          void applySession(nextSession);
-        }, 0);
+        void applySession(nextSession);
       }
     });
 
