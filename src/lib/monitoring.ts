@@ -25,7 +25,6 @@ export function reportError(error: Error, context?: Record<string, unknown>) {
     lastReportedAt = now;
 
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.error("[monitoring]", error, context);
     }
 
@@ -38,7 +37,6 @@ export function reportError(error: Error, context?: Record<string, unknown>) {
       user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
     }).then(({ error: insertError }) => {
       if (insertError && import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.error("[monitoring] échec de journalisation:", insertError);
       }
     });

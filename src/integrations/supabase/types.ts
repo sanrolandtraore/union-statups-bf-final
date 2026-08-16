@@ -2722,6 +2722,25 @@ export type Database = {
         Args: { _track_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_contact_info: {
+        Args: { p_target_user_id: string }
+        Returns: boolean
+      }
+      get_public_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          badge_type: string
+          bio: string
+          city: string
+          contact_info_locked: boolean
+          full_name: string
+          is_verified: boolean
+          linkedin_url: string
+          user_id: string
+          website: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

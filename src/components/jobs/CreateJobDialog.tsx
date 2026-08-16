@@ -93,7 +93,7 @@ const CreateJobDialog = ({ open, onOpenChange, onCreated }: CreateJobDialogProps
             </div>
             <div className="space-y-2">
               <Label>{t("miscV2.jobs.labelType")}</Label>
-              <Select value={form.job_type} onValueChange={(v) => update("job_type", v)}>
+              <Select value={form.job_type} onValueChange={(v) => update("job_type", v as JobType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="emploi">{t("miscV2.jobs.typeEmploi")}</SelectItem>

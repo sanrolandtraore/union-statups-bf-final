@@ -16,6 +16,12 @@ import type { Database } from "@/integrations/supabase/types";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type PublicProfile = Database["public"]["Functions"]["get_public_profile"]["Returns"][number];
+type TalentProfileRow = Database["public"]["Tables"]["talent_profiles"]["Row"];
+type StartupProfileRow = Database["public"]["Tables"]["startup_profiles"]["Row"];
+type InvestorProfileRow = Database["public"]["Tables"]["investor_profiles"]["Row"];
+type PartnerProfileRow = Database["public"]["Tables"]["partner_profiles"]["Row"];
+type RoleProfile = Partial<TalentProfileRow> & Partial<StartupProfileRow> & Partial<InvestorProfileRow> & Partial<PartnerProfileRow>;
 
 interface ProfileDetailDialogProps {
   open: boolean;
@@ -71,9 +77,9 @@ const BlurredContactOverlay = ({ onUpgrade }: { onUpgrade: () => void }) => (
 const ProfileDetailDialog = ({ open, onOpenChange, userId }: ProfileDetailDialogProps) => {
   const { user, role: currentUserRole } = useAuth();
   const { isPro, canPerformAction, incrementUsage } = useSubscription();
-  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [roleProfile, setRoleProfile] = useState<Record<string, unknown> | null>(null);
+  const [roleProfile, setRoleProfile] = useState<RoleProfile | null>(null);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [contactMessage, setContactMessage] = useState("");
@@ -88,11 +94,12 @@ const ProfileDetailDialog = ({ open, onOpenChange, userId }: ProfileDetailDialog
     setContactMessage("");
 
     const fetchProfile = async () => {
-      const [{ data: p }, { data: r }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+      const [{ data: pRows }, { data: r }] = await Promise.all([
+        supabase.rpc("get_public_profile", { p_user_id: userId }),
         supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
       ]);
 
+      const p = pRows?.[0] ?? null;
       setProfile(p);
       const userRole = r?.role || null;
       setRole(userRole);
@@ -100,7 +107,7 @@ const ProfileDetailDialog = ({ open, onOpenChange, userId }: ProfileDetailDialog
       if (userRole) {
         const table = `${userRole}_profiles` as "talent_profiles" | "startup_profiles" | "investor_profiles" | "partner_profiles";
         const { data: rp } = await supabase.from(table).select("*").eq("user_id", userId).maybeSingle();
-        setRoleProfile(rp);
+        setRoleProfile(rp as RoleProfile | null);
       }
 
       // Fetch user's projects
@@ -156,7 +163,11 @@ const ProfileDetailDialog = ({ open, onOpenChange, userId }: ProfileDetailDialog
 
   const isOwnProfile = user?.id === userId;
   const isAdmin = currentUserRole === "admin";
-  const canViewDetails = isPro || isOwnProfile || isAdmin;
+  // Le serveur (get_public_profile) redige déjà website/linkedin_url à NULL
+  // si l'appelant n'a pas le droit de les voir : `contact_info_locked` fait
+  // foi. `isPro`/`isOwnProfile`/`isAdmin` restent utilisés comme repli tant
+  // que le profil n'a pas fini de charger.
+  const canViewDetails = profile ? !profile.contact_info_locked : (isPro || isOwnProfile || isAdmin);
   const hasContactInfo = profile?.website || profile?.linkedin_url;
 
 

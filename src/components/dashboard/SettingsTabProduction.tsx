@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Bell, Camera, CheckCircle2, Eye, Globe, KeyRound, Loader2, LogOut, Shield, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ const ROLE_FIELDS: Record<string, string[]> = {
 };
 
 const SettingsTabProduction = () => {
-  const { t } = useTranslation();
   const { user, role, signOut } = useAuth();
   const { planName, isPro, subscription } = useSubscription();
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);

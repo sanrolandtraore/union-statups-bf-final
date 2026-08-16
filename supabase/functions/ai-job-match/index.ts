@@ -244,6 +244,15 @@ Tu dois retourner UNIQUEMENT les 10 meilleurs candidats maximum, triés par scor
       const profile = profilesMap.get(m.user_id);
       return {
         ...m,
+        talent_user_id: m.user_id,
+        match_score: m.total_score,
+        match_details: {
+          competences_match: m.competences_match,
+          experience_fit: m.experience_fit,
+          culture_fit: m.culture_fit,
+          growth_potential: m.growth_potential,
+          reasoning: m.reasoning,
+        },
         full_name: profile?.full_name || "Anonyme",
         title: talent?.title || "",
         skills: talent?.skills || [],
