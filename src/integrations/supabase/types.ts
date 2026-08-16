@@ -2726,6 +2726,23 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: boolean
       }
+      get_public_platform_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          content_hours: number
+          coaching_sessions: number
+          investors: number
+          jobs: number
+          mentors: number
+          partners: number
+          pitch_rooms: number
+          programs: number
+          projects: number
+          startups: number
+          talents: number
+          verified_profiles: number
+        }[]
+      }
       get_public_profile: {
         Args: { p_user_id: string }
         Returns: {

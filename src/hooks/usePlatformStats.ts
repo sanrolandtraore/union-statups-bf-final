@@ -20,49 +20,26 @@ export const usePlatformStats = () => {
   return useQuery({
     queryKey: ["platform-stats"],
     queryFn: async (): Promise<PlatformStats> => {
-      const [
-        { count: talents },
-        { count: startups },
-        { count: investors },
-        { count: partners },
-        { count: mentors },
-        { count: programs },
-        { data: contentData },
-        { count: coachingSessions },
-        { count: pitchRooms },
-        { count: projects },
-        { count: jobs },
-        { count: profiles },
-      ] = await Promise.all([
-        supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "talent"),
-        supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "startup"),
-        supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "investor"),
-        supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "partner"),
-        supabase.from("mentors").select("*", { count: "exact", head: true }).eq("is_approved", true),
-        supabase.from("startup_school_programs").select("*", { count: "exact", head: true }).eq("is_published", true),
-        supabase.from("startup_school_programs").select("duration_hours").eq("is_published", true),
-        supabase.from("coaching_sessions").select("*", { count: "exact", head: true }),
-        supabase.from("pitch_rooms").select("*", { count: "exact", head: true }),
-        supabase.from("projects").select("*", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("jobs").select("*", { count: "exact", head: true }).eq("is_active", true),
-        supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_verified", true),
-      ]);
-
-      const totalHours = (contentData || []).reduce((sum, p) => sum + (p.duration_hours || 0), 0);
-
+      const { data, error } = await supabase.rpc("get_public_platform_stats").maybeSingle();
+      if (error || !data) {
+        return {
+          talents: 0, startups: 0, investors: 0, partners: 0, mentors: 0, programs: 0,
+          contentHours: 0, coachingSessions: 0, pitchRooms: 0, projects: 0, jobs: 0, profiles: 0,
+        };
+      }
       return {
-        talents: talents || 0,
-        startups: startups || 0,
-        investors: investors || 0,
-        partners: partners || 0,
-        mentors: mentors || 0,
-        programs: programs || 0,
-        contentHours: totalHours,
-        coachingSessions: coachingSessions || 0,
-        pitchRooms: pitchRooms || 0,
-        projects: projects || 0,
-        jobs: jobs || 0,
-        profiles: profiles || 0,
+        talents: data.talents || 0,
+        startups: data.startups || 0,
+        investors: data.investors || 0,
+        partners: data.partners || 0,
+        mentors: data.mentors || 0,
+        programs: data.programs || 0,
+        contentHours: data.content_hours || 0,
+        coachingSessions: data.coaching_sessions || 0,
+        pitchRooms: data.pitch_rooms || 0,
+        projects: data.projects || 0,
+        jobs: data.jobs || 0,
+        profiles: data.verified_profiles || 0,
       };
     },
     staleTime: 5 * 60 * 1000, // 5 min cache
