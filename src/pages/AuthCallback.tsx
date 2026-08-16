@@ -12,13 +12,25 @@ const AuthCallback = () => {
     let mounted = true;
 
     const finish = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-      const authError = params.get("error_description") || hash.get("error_description");
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
 
+      const authError = params.get("error_description") || hash.get("error_description");
       if (authError) {
         if (mounted) setError(decodeURIComponent(authError.replace(/\+/g, " ")));
         return;
+      }
+
+      // Supabase can return a PKCE authorization code after email verification
+      // or an OAuth callback. Exchange it before trying to restore the session.
+      const code = params.get("code");
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          if (mounted) setError(exchangeError.message);
+          return;
+        }
       }
 
       const { data, error: sessionError } = await supabase.auth.getSession();
@@ -35,16 +47,22 @@ const AuthCallback = () => {
       }
 
       const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (!mounted) return;
+
       if (userError || !userData.user) {
         setError(userError?.message || "La vérification n'a pas pu établir une session.");
         return;
       }
 
+      // A verified user without an active browser session should authenticate
+      // normally rather than being sent through a callback loop.
       navigate("/auth", { replace: true });
     };
 
     void finish();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [navigate]);
 
   if (error) {
@@ -54,7 +72,9 @@ const AuthCallback = () => {
           <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
           <h1 className="text-xl font-semibold">Vérification impossible</h1>
           <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-          <Button className="mt-6" onClick={() => navigate("/auth", { replace: true })}>Retour à la connexion</Button>
+          <Button className="mt-6" onClick={() => navigate("/auth", { replace: true })}>
+            Retour à la connexion
+          </Button>
         </div>
       </main>
     );
