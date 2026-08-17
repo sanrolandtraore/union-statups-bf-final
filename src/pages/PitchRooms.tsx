@@ -29,7 +29,7 @@ const statusLabels: Record<string, string> = {
 
 const PitchRooms = () => {
   const { user, role } = useAuth();
-  const canCreate = role === "investor" || role === "partner" || role === "admin";
+  const canCreate = !!role;
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -62,7 +62,7 @@ const PitchRooms = () => {
 
   const createRoom = async () => {
     if (!form.title.trim() || !user || !canCreate) {
-      if (!canCreate) toast({ title: "Action réservée", description: "Seuls les investisseurs et partenaires peuvent créer une Pitch Room.", variant: "destructive" });
+      if (!canCreate) toast({ title: "Action réservée", description: "Vous devez être connecté pour créer une Pitch Room.", variant: "destructive" });
       return;
     }
     setCreating(true);

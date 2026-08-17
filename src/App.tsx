@@ -76,7 +76,7 @@ const App = () => (
                 <Route path="/gallery" element={<Gallery />} />
                 <Route path="/talents" element={<TalentDirectory />} />
                 <Route path="/projets" element={<ProjectDirectory />} />
-                <Route path="/startup-school" element={<StartupSchool />} />
+                <Route path="/startup-school" element={<ProtectedRoute allowedRoles={["startup"]}><StartupSchool /></ProtectedRoute>} />
                 <Route path="/syndicates" element={<ProtectedRoute><Syndicates /></ProtectedRoute>} />
                 <Route path="/syndicates/create" element={<ProtectedRoute><CreateSyndicate /></ProtectedRoute>} />
                 <Route path="/syndicates/:id" element={<ProtectedRoute><SyndicateDetail /></ProtectedRoute>} />

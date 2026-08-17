@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import {
   TrendingUp, Plus, Search, MapPin, Users,
-  Building2, Target, Send, Loader2,
+  Building2, Target, Send, Loader2, Upload,
   Edit, Trash2, MessageSquare, Clock, CheckCircle, XCircle, Rocket,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
@@ -46,17 +46,36 @@ const FundraisingTab = () => {
     title: "", description: "", sector: "", stage: "pre-seed",
     target_amount: "", min_ticket: "", valuation: "", equity_offered: "",
     company_name: "", city: "", team_size: "", revenue_monthly: "",
-    traction: "", use_of_funds: "", timeline: "", pitch_deck_url: "",
+    traction: "", use_of_funds: "", timeline: "",
   });
 
   // Interest form
   const [interestForm, setInterestForm] = useState({ message: "", proposed_amount: "" });
 
+  // Pitch deck (upload de fichier, remplace l'ancien champ URL en texte libre)
+  const [pitchDeckFile, setPitchDeckFile] = useState<File | null>(null);
+  const [uploadingDeck, setUploadingDeck] = useState(false);
+  const PITCH_DECK_TYPES = ["application/pdf", "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation"];
+  const MAX_PITCH_DECK_SIZE = 20 * 1024 * 1024;
+
+  const handlePitchDeckChange = (file: File | null) => {
+    if (!file) return setPitchDeckFile(null);
+    if (!PITCH_DECK_TYPES.includes(file.type)) return toast.error("Format non supporté. Utilisez PDF, PPT ou PPTX.");
+    if (file.size > MAX_PITCH_DECK_SIZE) return toast.error("Fichier trop volumineux. Taille maximale : 20 Mo.");
+    setPitchDeckFile(file);
+  };
+
+  const viewPitchDeck = async (path: string) => {
+    const { data, error } = await supabase.storage.from("pitch-decks").createSignedUrl(path, 300);
+    if (error || !data) return toast.error("Impossible d'ouvrir le pitch deck");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
   const resetForm = () => setForm({
     title: "", description: "", sector: "", stage: "pre-seed",
     target_amount: "", min_ticket: "", valuation: "", equity_offered: "",
     company_name: "", city: "", team_size: "", revenue_monthly: "",
-    traction: "", use_of_funds: "", timeline: "", pitch_deck_url: "",
+    traction: "", use_of_funds: "", timeline: "",
   });
 
   // Fetch my campaigns (startup view)
@@ -130,6 +149,24 @@ const FundraisingTab = () => {
   // Create/update campaign mutation
   const saveCampaign = useMutation({
     mutationFn: async (isEdit: boolean) => {
+      let pitchDeckPath = isEdit ? editingCampaign?.pitch_deck_url ?? null : null;
+
+      if (pitchDeckFile) {
+        setUploadingDeck(true);
+        const extension = pitchDeckFile.name.split(".").pop()?.toLowerCase() || "pdf";
+        const path = `${user!.id}/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from("pitch-decks")
+          .upload(path, pitchDeckFile, { cacheControl: "3600", upsert: false, contentType: pitchDeckFile.type });
+        setUploadingDeck(false);
+        if (uploadError) throw uploadError;
+        // Remplace l'ancien fichier une fois le nouveau confirmé
+        if (isEdit && editingCampaign?.pitch_deck_url) {
+          await supabase.storage.from("pitch-decks").remove([editingCampaign.pitch_deck_url]);
+        }
+        pitchDeckPath = path;
+      }
+
       const payload = {
         user_id: user!.id,
         title: form.title,
@@ -147,7 +184,7 @@ const FundraisingTab = () => {
         traction: form.traction || null,
         use_of_funds: form.use_of_funds || null,
         timeline: form.timeline || null,
-        pitch_deck_url: form.pitch_deck_url || null,
+        pitch_deck_url: pitchDeckPath,
       };
 
       if (isEdit && editingCampaign) {
@@ -169,9 +206,10 @@ const FundraisingTab = () => {
       queryClient.invalidateQueries({ queryKey: ["all-fundraising-campaigns"] });
       setShowCreateDialog(false);
       setEditingCampaign(null);
+      setPitchDeckFile(null);
       resetForm();
     },
-    onError: () => toast.error(t("fundraising.saveError")),
+    onError: () => { setUploadingDeck(false); toast.error(t("fundraising.saveError")); },
   });
 
   // Delete campaign
@@ -233,16 +271,16 @@ const FundraisingTab = () => {
       traction: campaign.traction || "",
       use_of_funds: campaign.use_of_funds || "",
       timeline: campaign.timeline || "",
-      pitch_deck_url: campaign.pitch_deck_url || "",
     });
+    setPitchDeckFile(null);
     setEditingCampaign(campaign);
     setShowCreateDialog(true);
   };
 
   const formatAmount = (val: number) => {
-    if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M€`;
-    if (val >= 1000) return `${(val / 1000).toFixed(0)}K€`;
-    return `${val}€`;
+    if (val >= 1000000) return `${(val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1)}M FCFA`;
+    if (val >= 1000) return `${(val / 1000).toFixed(0)}K FCFA`;
+    return `${val.toLocaleString("fr-FR")} FCFA`;
   };
 
   const alreadyInterestedIds = new Set(sentInterests.map((i) => i.campaign_id));
@@ -259,7 +297,7 @@ const FundraisingTab = () => {
           <p className="text-sm text-muted-foreground mt-1">{t("fundraising.subtitle")}</p>
         </div>
         {isStartup && (
-          <Button onClick={() => { resetForm(); setEditingCampaign(null); setShowCreateDialog(true); }} className="bg-gradient-gold text-primary-foreground">
+          <Button onClick={() => { resetForm(); setPitchDeckFile(null); setEditingCampaign(null); setShowCreateDialog(true); }} className="bg-gradient-gold text-primary-foreground">
             <Plus className="h-4 w-4 mr-2" />
             {t("fundraising.createCampaign")}
           </Button>
@@ -283,7 +321,7 @@ const FundraisingTab = () => {
                   <Rocket className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
                   <p className="text-lg font-medium text-foreground">{t("fundraising.noCampaigns")}</p>
                   <p className="text-sm text-muted-foreground mt-1">{t("fundraising.noCampaignsDesc")}</p>
-                  <Button className="mt-4 bg-gradient-gold text-primary-foreground" onClick={() => { resetForm(); setShowCreateDialog(true); }}>
+                  <Button className="mt-4 bg-gradient-gold text-primary-foreground" onClick={() => { resetForm(); setPitchDeckFile(null); setShowCreateDialog(true); }}>
                     <Plus className="h-4 w-4 mr-2" /> {t("fundraising.createFirst")}
                   </Button>
                 </CardContent>
@@ -614,15 +652,15 @@ const FundraisingTab = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>{t("fundraising.targetAmount")} * (€)</Label>
+                <Label>{t("fundraising.targetAmount")} * (FCFA)</Label>
                 <Input type="number" value={form.target_amount} onChange={(e) => setForm(f => ({ ...f, target_amount: e.target.value }))} placeholder="500000" />
               </div>
               <div className="space-y-1.5">
-                <Label>{t("fundraising.minTicketLabel")} (€)</Label>
+                <Label>{t("fundraising.minTicketLabel")} (FCFA)</Label>
                 <Input type="number" value={form.min_ticket} onChange={(e) => setForm(f => ({ ...f, min_ticket: e.target.value }))} placeholder="25000" />
               </div>
               <div className="space-y-1.5">
-                <Label>{t("fundraising.valuationLabel")} (€)</Label>
+                <Label>{t("fundraising.valuationLabel")} (FCFA)</Label>
                 <Input type="number" value={form.valuation} onChange={(e) => setForm(f => ({ ...f, valuation: e.target.value }))} placeholder="5000000" />
               </div>
               <div className="space-y-1.5">
@@ -637,7 +675,7 @@ const FundraisingTab = () => {
                 <Input type="number" value={form.team_size} onChange={(e) => setForm(f => ({ ...f, team_size: e.target.value }))} placeholder="5" />
               </div>
               <div className="space-y-1.5">
-                <Label>{t("fundraising.monthlyRevenue")} (€)</Label>
+                <Label>{t("fundraising.monthlyRevenue")} (FCFA)</Label>
                 <Input type="number" value={form.revenue_monthly} onChange={(e) => setForm(f => ({ ...f, revenue_monthly: e.target.value }))} placeholder="10000" />
               </div>
             </div>
@@ -658,21 +696,43 @@ const FundraisingTab = () => {
                 <Input value={form.timeline} onChange={(e) => setForm(f => ({ ...f, timeline: e.target.value }))} placeholder="Q2 2026" />
               </div>
               <div className="space-y-1.5">
-                <Label>Pitch Deck URL</Label>
-                <Input value={form.pitch_deck_url} onChange={(e) => setForm(f => ({ ...f, pitch_deck_url: e.target.value }))} placeholder="https://..." />
+                <Label>Pitch Deck</Label>
+                <div className="rounded-lg border border-dashed border-border p-3">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <Upload className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {pitchDeckFile ? pitchDeckFile.name : "PDF, PPT ou PPTX — max 20 Mo"}
+                    </span>
+                    <input
+                      type="file"
+                      className="sr-only"
+                      accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                      onChange={(e) => handlePitchDeckChange(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {!pitchDeckFile && editingCampaign?.pitch_deck_url && (
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-primary hover:underline"
+                      onClick={() => viewPitchDeck(editingCampaign.pitch_deck_url!)}
+                    >
+                      Voir le fichier actuel
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button variant="outline" onClick={() => { setShowCreateDialog(false); setEditingCampaign(null); }}>
+              <Button variant="outline" onClick={() => { setShowCreateDialog(false); setEditingCampaign(null); setPitchDeckFile(null); }}>
                 {t("fundraising.cancel")}
               </Button>
               <Button
                 className="bg-gradient-gold text-primary-foreground"
                 onClick={() => saveCampaign.mutate(!!editingCampaign)}
-                disabled={!form.title || !form.target_amount || saveCampaign.isPending}
+                disabled={!form.title || !form.target_amount || saveCampaign.isPending || uploadingDeck}
               >
-                {saveCampaign.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {(saveCampaign.isPending || uploadingDeck) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {editingCampaign ? t("fundraising.update") : t("fundraising.publish")}
               </Button>
             </div>
@@ -689,7 +749,7 @@ const FundraisingTab = () => {
           </DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <Label>{t("fundraising.proposedAmount")} (€)</Label>
+              <Label>{t("fundraising.proposedAmount")} (FCFA)</Label>
               <Input
                 type="number"
                 value={interestForm.proposed_amount}

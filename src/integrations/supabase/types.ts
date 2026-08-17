@@ -1778,9 +1778,11 @@ export type Database = {
           full_name: string | null
           id: string
           is_verified: boolean
+          kyc_document_url: string | null
           kyc_status: string
           last_seen_at: string | null
           linkedin_url: string | null
+          preferences: Json
           updated_at: string
           user_id: string
           website: string | null
@@ -1794,9 +1796,11 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_verified?: boolean
+          kyc_document_url?: string | null
           kyc_status?: string
           last_seen_at?: string | null
           linkedin_url?: string | null
+          preferences?: Json
           updated_at?: string
           user_id: string
           website?: string | null
@@ -1810,9 +1814,11 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_verified?: boolean
+          kyc_document_url?: string | null
           kyc_status?: string
           last_seen_at?: string | null
           linkedin_url?: string | null
+          preferences?: Json
           updated_at?: string
           user_id?: string
           website?: string | null

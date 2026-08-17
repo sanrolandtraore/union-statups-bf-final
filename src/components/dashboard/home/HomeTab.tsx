@@ -85,42 +85,50 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
     const load = async () => {
       setLoading(true);
 
-      // 1. Profil de base
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      // 2. Profil de rôle
       const roleTable = `${role}_profiles` as
         | "talent_profiles" | "startup_profiles" | "investor_profiles" | "partner_profiles";
-      let rp: RoleProfile | null = null;
-      if (role !== "admin") {
-        const { data } = await supabase.from(roleTable).select("*").eq("user_id", user.id).maybeSingle();
-        rp = data as RoleProfile | null;
-      }
 
-      // 3. Stats par rôle (requêtes en parallèle)
+      // Toutes les requêtes sont indépendantes : on les lance en parallèle
+      // plutôt qu'en série pour diviser le temps de chargement du tableau
+      // de bord par ~5 (chaque aller-retour réseau ajoutait sa latence
+      // complète l'un après l'autre).
       const [
+        { data: p },
+        { data: rpData },
         contactsIn, contactsOut, myProjects, myJobs, myApps, myCommits, myCampaigns,
+        recsRaw,
+        { data: room },
+        { data: recentContacts },
       ] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+        role !== "admin"
+          ? supabase.from(roleTable).select("*").eq("user_id", user.id).maybeSingle()
+          : Promise.resolve({ data: null }),
         supabase.from("contact_requests").select("id, status", { count: "exact", head: false }).eq("receiver_id", user.id),
         supabase.from("contact_requests").select("id, status", { count: "exact", head: false }).eq("sender_id", user.id),
-        supabase.from("projects").select("id, moderation_status", { count: "exact", head: false }).eq("user_id", user.id),
+        supabase.from("projects").select("id", { count: "exact", head: false }).eq("user_id", user.id),
         supabase.from("jobs").select("id, applications_count", { count: "exact", head: false }).eq("user_id", user.id),
         supabase.from("job_applications").select("id, status", { count: "exact", head: false }).eq("applicant_id", user.id),
         supabase.from("commitments").select("id, amount, status", { count: "exact", head: false }).eq("user_id", user.id),
         supabase.from("fundraising_campaigns").select("id, raised_so_far, target_amount, status", { count: "exact", head: false }).eq("user_id", user.id),
+        role === "talent"
+          ? supabase.from("jobs").select("id, title, company_name, city").eq("is_active", true).order("created_at", { ascending: false }).limit(3)
+          : role === "startup"
+            ? supabase.rpc("search_talents", { p_limit: 3, p_offset: 0 })
+            : role === "investor" || role === "partner"
+              ? supabase.rpc("search_projects", { p_limit: 3, p_offset: 0 })
+              : Promise.resolve({ data: [] }),
+        supabase.from("pitch_rooms").select("id, title, scheduled_at, status")
+          .in("status", ["scheduled", "live"]).order("scheduled_at", { ascending: true, nullsFirst: false }).limit(1).maybeSingle(),
+        supabase.from("contact_requests").select("id, status, created_at, sender_id")
+          .eq("receiver_id", user.id).order("created_at", { ascending: false }).limit(5),
       ]);
+      const rp = rpData as RoleProfile | null;
 
-      // 4. Recommandations (top 3 par rôle)
       let recs: RecommendationItem[] = [];
+      const recsData = (recsRaw as { data: unknown[] } | undefined)?.data ?? [];
       if (role === "talent") {
-        const { data: jobs } = await supabase
-          .from("jobs").select("id, title, company_name, city")
-          .eq("is_active", true).order("created_at", { ascending: false }).limit(3);
-        recs = (jobs ?? []).map((j) => ({
+        recs = (recsData as { id: string; title: string; company_name: string | null; city: string | null }[]).map((j) => ({
           id: j.id,
           title: j.title,
           subtitle: [j.company_name, j.city].filter(Boolean).join(" · ") || "Opportunité",
@@ -128,50 +136,22 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
           onClick: () => navigate(`/jobs/${j.id}`),
         }));
       } else if (role === "startup") {
-        const { data: tals } = await supabase.rpc("search_talents", { p_limit: 3, p_offset: 0 });
-        recs = (tals ?? []).map((t) => ({
+        recs = (recsData as { user_id: string; full_name: string | null; title: string | null; city: string | null }[]).map((t) => ({
           id: t.user_id,
           title: t.full_name || "Talent",
           subtitle: [t.title, t.city].filter(Boolean).join(" · ") || "Talent vérifié",
           badge: "Talent",
           onClick: () => navigate("/talents"),
         }));
-      } else if (role === "investor") {
-        const { data: prjs } = await supabase.rpc("search_projects", { p_limit: 3, p_offset: 0 });
-        recs = (prjs ?? []).map((p) => ({
-          id: p.id,
-          title: p.title,
-          subtitle: [p.sector, p.city].filter(Boolean).join(" · ") || "Projet",
-          badge: "Deal",
-          onClick: () => navigate("/projets"),
-        }));
-      } else if (role === "partner") {
-        const { data: prjs } = await supabase.rpc("search_projects", { p_limit: 3, p_offset: 0 });
-        recs = (prjs ?? []).map((p) => ({
-          id: p.id,
-          title: p.title,
-          subtitle: [p.sector, p.city].filter(Boolean).join(" · ") || "Projet",
-          badge: "Projet",
+      } else if (role === "investor" || role === "partner") {
+        recs = (recsData as { id: string; title: string; sector: string | null; city: string | null }[]).map((pr) => ({
+          id: pr.id,
+          title: pr.title,
+          subtitle: [pr.sector, pr.city].filter(Boolean).join(" · ") || "Projet",
+          badge: role === "investor" ? "Deal" : "Projet",
           onClick: () => navigate("/projets"),
         }));
       }
-
-      // 5. Pitch Room à venir
-      const { data: room } = await supabase
-        .from("pitch_rooms")
-        .select("id, title, scheduled_at, status")
-        .in("status", ["scheduled", "live"])
-        .order("scheduled_at", { ascending: true, nullsFirst: false })
-        .limit(1)
-        .maybeSingle();
-
-      // 6. Activité récente (contacts reçus + apps reçues si startup)
-      const { data: recentContacts } = await supabase
-        .from("contact_requests")
-        .select("id, status, created_at, sender_id")
-        .eq("receiver_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
 
       const acts: ActivityItem[] = (recentContacts ?? []).map((c) => ({
         id: c.id,
@@ -208,11 +188,10 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
           ...baseStats
         );
       } else if (role === "startup") {
-        const approved = (myProjects.data ?? []).filter((p) => p.moderation_status === "approved").length;
         const totalApps = (myJobs.data ?? []).reduce((s, j) => s + (j.applications_count ?? 0), 0);
         const totalRaised = (myCampaigns.data ?? []).reduce((s, c) => s + (c.raised_so_far ?? 0), 0);
         computed.push(
-          { label: "Projets publiés", value: `${approved}/${myProjects.count ?? 0}`, icon: Layers, hint: "Approuvés / total" },
+          { label: "Projets publiés", value: myProjects.count ?? 0, icon: Layers, hint: "Vos projets actifs" },
           { label: "Candidatures reçues", value: totalApps, icon: Briefcase },
           { label: "Offres actives", value: myJobs.count ?? 0, icon: Megaphone },
           ...(myCampaigns.count ? [{ label: "Fonds levés", value: `${(totalRaised / 1_000_000).toFixed(1)}M`, icon: TrendingUp, hint: "FCFA cumulés sur vos campagnes" }] : []),
