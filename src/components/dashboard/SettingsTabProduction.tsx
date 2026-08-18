@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -40,6 +41,7 @@ const ROLE_FIELDS: Record<string, string[]> = {
 };
 
 const SettingsTabProduction = () => {
+  const { t, i18n } = useTranslation();
   const { user, role, signOut } = useAuth();
   const { planName, isPro, subscription } = useSubscription();
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null);
@@ -95,7 +97,7 @@ const SettingsTabProduction = () => {
     const { error } = await supabase.from("profiles").update({ preferences: next } as never).eq("user_id", user.id);
     if (error) {
       setPreferences(preferences);
-      toast.error("Impossible d'enregistrer ce paramètre.");
+      toast.error(t("settings.privacy.saveError"));
     }
   };
 
@@ -103,8 +105,8 @@ const SettingsTabProduction = () => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
     const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowed.includes(file.type)) return toast.error("Format non supporté. Utilisez JPG, PNG, WebP ou GIF.");
-    if (file.size > 5 * 1024 * 1024) return toast.error("La photo ne doit pas dépasser 5 Mo.");
+    if (!allowed.includes(file.type)) return toast.error(t("settings.photo.errors.unsupportedFormat"));
+    if (file.size > 5 * 1024 * 1024) return toast.error(t("settings.photo.errors.tooLarge"));
     setAvatarUploading(true);
     try {
       const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -116,10 +118,10 @@ const SettingsTabProduction = () => {
       const { error: updateError } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
       if (updateError) throw updateError;
       setProfile((current) => ({ ...(current || {}), avatar_url: avatarUrl }));
-      toast.success("Photo de profil mise à jour.");
+      toast.success(t("settings.photo.success"));
     } catch (error) {
       console.error("Avatar upload error:", error);
-      toast.error(error instanceof Error ? error.message : "Erreur lors du téléversement.");
+      toast.error(error instanceof Error ? error.message : t("settings.photo.errors.uploadFailed"));
     } finally {
       setAvatarUploading(false);
       event.target.value = "";
@@ -128,27 +130,27 @@ const SettingsTabProduction = () => {
 
   const handleChangePassword = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (newPassword.length < 8) return toast.error("Le mot de passe doit contenir au moins 8 caractères.");
-    if (newPassword !== confirmPassword) return toast.error("Les mots de passe ne correspondent pas.");
+    if (newPassword.length < 8) return toast.error(t("settings.security.errors.tooShort"));
+    if (newPassword !== confirmPassword) return toast.error(t("settings.security.errors.mismatch"));
     setPasswordLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPasswordLoading(false);
     if (error) return toast.error(error.message);
     setNewPassword("");
     setConfirmPassword("");
-    toast.success("Mot de passe mis à jour.");
+    toast.success(t("settings.security.success"));
   };
 
   const handleDeleteAccount = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Session expirée.");
+      if (!session) throw new Error(t("settings.danger.sessionExpired"));
       const { data, error } = await supabase.functions.invoke("delete-account", { headers: { Authorization: `Bearer ${session.access_token}` } });
-      if (error || data?.error) throw new Error(data?.error || error?.message || "Suppression impossible.");
+      if (error || data?.error) throw new Error(data?.error || error?.message || t("settings.danger.deleteFailed"));
       await supabase.auth.signOut();
       window.location.assign("/");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la suppression du compte.");
+      toast.error(error instanceof Error ? error.message : t("settings.danger.deleteError"));
     } finally {
       setDeleteOpen(false);
     }
@@ -158,42 +160,42 @@ const SettingsTabProduction = () => {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div><h1 className="font-display text-3xl font-bold text-foreground">Paramètres du compte</h1><p className="mt-1 text-muted-foreground">Compte, sécurité, confidentialité, notifications et vérification.</p></div>
+      <div><h1 className="font-display text-3xl font-bold text-foreground">{t("settings.title")}</h1><p className="mt-1 text-muted-foreground">{t("settings.subtitle")}</p></div>
 
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-5 flex items-center gap-2 font-display text-lg font-semibold"><Camera className="h-5 w-5 text-primary" /> Photo de profil</h2>
+        <h2 className="mb-5 flex items-center gap-2 font-display text-lg font-semibold"><Camera className="h-5 w-5 text-primary" /> {t("settings.photo.title")}</h2>
         <div className="flex items-center gap-5">
           <Avatar className="h-20 w-20 border-2 border-border"><AvatarImage src={String(profile?.avatar_url || "")} /><AvatarFallback>{String(profile?.full_name || user?.email || "U").charAt(0).toUpperCase()}</AvatarFallback></Avatar>
-          <label className="cursor-pointer"><Button type="button" variant="outline" disabled={avatarUploading} asChild><span>{avatarUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}{avatarUploading ? "Téléversement…" : "Choisir une photo"}<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleAvatarUpload} disabled={avatarUploading} /></span></Button><p className="mt-2 text-xs text-muted-foreground">JPG, PNG, WebP ou GIF · 5 Mo max</p></label>
+          <label className="cursor-pointer"><Button type="button" variant="outline" disabled={avatarUploading} asChild><span>{avatarUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}{avatarUploading ? t("settings.photo.uploading") : t("settings.photo.choose")}<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleAvatarUpload} disabled={avatarUploading} /></span></Button><p className="mt-2 text-xs text-muted-foreground">{t("settings.photo.hint")}</p></label>
         </div>
       </section>
 
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><User className="h-5 w-5 text-primary" /> Complétion du profil</h2>
-        <div className="flex items-center justify-between"><span className="text-2xl font-bold">{completion.percent}%</span><Badge>{completion.filled.length}/{completion.fields.length} champs</Badge></div>
+        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><User className="h-5 w-5 text-primary" /> {t("settings.completion.title")}</h2>
+        <div className="flex items-center justify-between"><span className="text-2xl font-bold">{completion.percent}%</span><Badge>{completion.filled.length}/{completion.fields.length} {t("settings.completion.fields")}</Badge></div>
         <Progress value={completion.percent} className="my-4 h-2" />
         <div className="grid grid-cols-2 gap-2">{completion.fields.map((field) => <div key={field} className="flex items-center gap-2 text-sm"><CheckCircle2 className={`h-4 w-4 ${completion.filled.some((f) => f === field) ? "text-green-500" : "text-muted-foreground/30"}`} />{field}</div>)}</div>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Globe className="h-5 w-5 text-primary" /> Langue</h2><LanguageSwitcher variant="inline" /></section>
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Globe className="h-5 w-5 text-primary" /> {t("settings.language.title")}</h2><LanguageSwitcher variant="inline" /></section>
 
-      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Bell className="h-5 w-5 text-primary" /> Notifications</h2><div className="space-y-4">
-        {([ ["notifEmail", "Notifications par email", "Recevoir les mises à jour importantes"], ["notifMatching", "Alertes de matching", "Recevoir les nouveaux profils compatibles"], ["notifMessages", "Messages", "Recevoir les nouveaux messages et demandes"] ] as const).map(([key, label, description]) => <div key={key} className="flex items-center justify-between"><div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div><Switch checked={preferences[key]} onCheckedChange={(value) => void updatePreference(key, value)} /></div>)}
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Bell className="h-5 w-5 text-primary" /> {t("settings.notifications.title")}</h2><div className="space-y-4">
+        {([ ["notifEmail", t("settings.notifications.email.label"), t("settings.notifications.email.desc")], ["notifMatching", t("settings.notifications.matching.label"), t("settings.notifications.matching.desc")], ["notifMessages", t("settings.notifications.messages.label"), t("settings.notifications.messages.desc")] ] as const).map(([key, label, description]) => <div key={key} className="flex items-center justify-between"><div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div><Switch checked={preferences[key]} onCheckedChange={(value) => void updatePreference(key, value)} /></div>)}
       </div></section>
 
-      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Eye className="h-5 w-5 text-primary" /> Confidentialité</h2><div className="space-y-4">
-        {([ ["profilePublic", "Profil public", "Visible dans les annuaires et résultats de recherche"], ["showEmail", "Afficher l'email", "Permettre aux autres utilisateurs de voir votre email"] ] as const).map(([key, label, description]) => <div key={key} className="flex items-center justify-between"><div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div><Switch checked={preferences[key]} onCheckedChange={(value) => void updatePreference(key, value)} /></div>)}
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Eye className="h-5 w-5 text-primary" /> {t("settings.privacy.title")}</h2><div className="space-y-4">
+        {([ ["profilePublic", t("settings.privacy.publicProfile.label"), t("settings.privacy.publicProfile.desc")], ["showEmail", t("settings.privacy.showEmail.label"), t("settings.privacy.showEmail.desc")] ] as const).map(([key, label, description]) => <div key={key} className="flex items-center justify-between"><div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div><Switch checked={preferences[key]} onCheckedChange={(value) => void updatePreference(key, value)} /></div>)}
       </div></section>
 
-      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Shield className="h-5 w-5 text-primary" /> Sécurité</h2><form onSubmit={handleChangePassword} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div><Label>Nouveau mot de passe</Label><Input className="mt-2" type="password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required /></div><div><Label>Confirmation</Label><Input className="mt-2" type="password" minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required /></div></div><Button type="submit" variant="outline" disabled={passwordLoading}>{passwordLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}Changer le mot de passe</Button></form></section>
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Shield className="h-5 w-5 text-primary" /> {t("settings.security.title")}</h2><form onSubmit={handleChangePassword} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div><Label>{t("settings.security.newPassword")}</Label><Input className="mt-2" type="password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required /></div><div><Label>{t("settings.security.confirmPassword")}</Label><Input className="mt-2" type="password" minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required /></div></div><Button type="submit" variant="outline" disabled={passwordLoading}>{passwordLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}{t("settings.security.changeBtn")}</Button></form></section>
 
-      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Shield className="h-5 w-5 text-primary" /> Vérification KYC</h2><KYCSection /></section>
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Shield className="h-5 w-5 text-primary" /> {t("settings.kycTitle")}</h2><KYCSection /></section>
 
-      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 font-display text-lg font-semibold">Abonnement</h2><div className="flex items-center justify-between"><div><p className="font-semibold">Plan {planName === "business" ? "Business" : planName === "pro" ? "Pro" : "Gratuit"}</p><p className="text-xs text-muted-foreground">{isPro && subscription?.current_period_end ? `Renouvellement : ${new Date(subscription.current_period_end).toLocaleDateString("fr-FR")}` : "Fonctionnalités selon votre plan"}</p></div><Badge>{isPro ? "Pro" : "Gratuit"}</Badge></div></section>
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 font-display text-lg font-semibold">{t("settings.subscription.title")}</h2><div className="flex items-center justify-between"><div><p className="font-semibold">{t("settings.subscription.planLabel", { plan: planName === "business" ? t("settings.subscription.plans.business") : planName === "pro" ? t("settings.subscription.plans.pro") : t("settings.subscription.plans.free") })}</p><p className="text-xs text-muted-foreground">{isPro && subscription?.current_period_end ? t("settings.subscription.renewal", { date: new Date(subscription.current_period_end).toLocaleDateString(i18n.language === "en" ? "en-US" : "fr-FR") }) : t("settings.subscription.featuresByPlan")}</p></div><Badge>{isPro ? t("settings.subscription.plans.pro") : t("settings.subscription.plans.free")}</Badge></div></section>
 
-      <section className="rounded-xl border border-destructive/30 bg-destructive/5 p-6"><h2 className="mb-4 font-display text-lg font-semibold text-destructive">Zone de danger</h2><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => void signOut()}><LogOut className="mr-2 h-4 w-4" />Déconnexion</Button><Button variant="destructive" onClick={() => setDeleteOpen(true)}><Trash2 className="mr-2 h-4 w-4" />Supprimer mon compte</Button></div><Separator className="my-4" /><p className="text-xs text-muted-foreground">La suppression du compte est irréversible. Les données seront supprimées selon les règles de conservation applicables.</p></section>
+      <section className="rounded-xl border border-destructive/30 bg-destructive/5 p-6"><h2 className="mb-4 font-display text-lg font-semibold text-destructive">{t("settings.danger.title")}</h2><div className="flex flex-wrap gap-3"><Button variant="outline" onClick={() => void signOut()}><LogOut className="mr-2 h-4 w-4" />{t("settings.danger.signOut")}</Button><Button variant="destructive" onClick={() => setDeleteOpen(true)}><Trash2 className="mr-2 h-4 w-4" />{t("settings.danger.deleteAccount")}</Button></div><Separator className="my-4" /><p className="text-xs text-muted-foreground">{t("settings.danger.notice")}</p></section>
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}><DialogContent><DialogHeader><DialogTitle className="text-destructive">Supprimer le compte ?</DialogTitle><DialogDescription>Cette action est définitive. Vérifiez que vous souhaitez réellement supprimer votre compte et les données associées.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setDeleteOpen(false)}>Annuler</Button><Button variant="destructive" onClick={() => void handleDeleteAccount()}>Confirmer la suppression</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}><DialogContent><DialogHeader><DialogTitle className="text-destructive">{t("settings.danger.dialogTitle")}</DialogTitle><DialogDescription>{t("settings.danger.dialogDesc")}</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setDeleteOpen(false)}>{t("settings.danger.cancel")}</Button><Button variant="destructive" onClick={() => void handleDeleteAccount()}>{t("settings.danger.confirm")}</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 };

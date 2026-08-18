@@ -774,8 +774,90 @@
     }
   },
   "settings": {
-    "language": "Language",
-    "languageHint": "Changes apply instantly and are saved on this device."
+    "title": "Account settings",
+    "subtitle": "Account, security, privacy, notifications and verification.",
+    "photo": {
+      "title": "Profile photo",
+      "choose": "Choose a photo",
+      "uploading": "Uploading…",
+      "hint": "JPG, PNG, WebP or GIF · 5 MB max",
+      "errors": {
+        "unsupportedFormat": "Unsupported format. Use JPG, PNG, WebP or GIF.",
+        "tooLarge": "Photo must not exceed 5 MB.",
+        "uploadFailed": "Error while uploading."
+      },
+      "success": "Profile photo updated."
+    },
+    "completion": {
+      "title": "Profile completion",
+      "fields": "fields"
+    },
+    "language": {
+      "title": "Language"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "email": {
+        "label": "Email notifications",
+        "desc": "Receive important updates"
+      },
+      "matching": {
+        "label": "Matching alerts",
+        "desc": "Receive new compatible profiles"
+      },
+      "messages": {
+        "label": "Messages",
+        "desc": "Receive new messages and requests"
+      }
+    },
+    "privacy": {
+      "title": "Privacy",
+      "publicProfile": {
+        "label": "Public profile",
+        "desc": "Visible in directories and search results"
+      },
+      "showEmail": {
+        "label": "Show email",
+        "desc": "Allow other users to see your email"
+      },
+      "saveError": "Unable to save this setting."
+    },
+    "security": {
+      "title": "Security",
+      "newPassword": "New password",
+      "confirmPassword": "Confirmation",
+      "changeBtn": "Change password",
+      "errors": {
+        "tooShort": "Password must be at least 8 characters.",
+        "mismatch": "Passwords do not match."
+      },
+      "success": "Password updated."
+    },
+    "kycTitle": "KYC verification",
+    "subscription": {
+      "title": "Subscription",
+      "planLabel": "{{plan}} plan",
+      "plans": {
+        "free": "Free",
+        "pro": "Pro",
+        "business": "Business"
+      },
+      "renewal": "Renewal: {{date}}",
+      "featuresByPlan": "Features depend on your plan"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "signOut": "Sign out",
+      "deleteAccount": "Delete my account",
+      "notice": "Account deletion is irreversible. Data will be deleted according to applicable retention rules.",
+      "dialogTitle": "Delete account?",
+      "dialogDesc": "This action is permanent. Make sure you really want to delete your account and associated data.",
+      "cancel": "Cancel",
+      "confirm": "Confirm deletion",
+      "deleteError": "Error while deleting account.",
+      "sessionExpired": "Session expired.",
+      "deleteFailed": "Deletion failed."
+    }
   },
   "pitchV2": {
     "annotationOverlay": {
@@ -1051,5 +1133,47 @@
         "other": "Other"
       }
     }
+  },
+  "kyc": {
+    "sectionStatusLabel": "KYC status",
+    "status": {
+      "pending": {
+        "label": "Not submitted",
+        "desc": "Submit your documents to get your profile verified and appear in the directory."
+      },
+      "submitted": {
+        "label": "Under review",
+        "desc": "Your file is being reviewed. You'll be notified once verification is complete."
+      },
+      "verified": {
+        "label": "Verified",
+        "desc": "Your profile is verified and visible in the directory."
+      },
+      "rejected": {
+        "label": "Rejected",
+        "desc": "Your submission was rejected. Please submit again with valid documents."
+      }
+    },
+    "idTypeLabel": "ID document type",
+    "idType": {
+      "cnib": "CNIB (Burkina Faso)",
+      "passport": "Passport",
+      "carteConsulaire": "Consular card",
+      "titreSejour": "Residence permit"
+    },
+    "idNumberLabel": "Document number",
+    "idNumberPlaceholder": "E.g. B0123456789",
+    "uploadLabel": "Upload your ID document",
+    "uploadHint": "PDF, JPG, PNG or WebP — max 10 MB",
+    "submitBtn": "Submit KYC verification",
+    "submitting": "Uploading and submitting...",
+    "errors": {
+      "unsupportedFormat": "Unsupported format. Use PDF, JPG, PNG or WebP.",
+      "fileTooLarge": "File too large. Maximum size: 10 MB.",
+      "idNumberRequired": "ID number is required",
+      "documentRequired": "Please upload your ID document",
+      "submitFailed": "Error while submitting"
+    },
+    "submitSuccess": "KYC submitted! Your verification is being processed."
   }
 }

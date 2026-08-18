@@ -774,8 +774,90 @@
     }
   },
   "settings": {
-    "language": "Langue",
-    "languageHint": "Le changement est instantané et mémorisé sur cet appareil."
+    "title": "Paramètres du compte",
+    "subtitle": "Compte, sécurité, confidentialité, notifications et vérification.",
+    "photo": {
+      "title": "Photo de profil",
+      "choose": "Choisir une photo",
+      "uploading": "Téléversement…",
+      "hint": "JPG, PNG, WebP ou GIF · 5 Mo max",
+      "errors": {
+        "unsupportedFormat": "Format non supporté. Utilisez JPG, PNG, WebP ou GIF.",
+        "tooLarge": "La photo ne doit pas dépasser 5 Mo.",
+        "uploadFailed": "Erreur lors du téléversement."
+      },
+      "success": "Photo de profil mise à jour."
+    },
+    "completion": {
+      "title": "Complétion du profil",
+      "fields": "champs"
+    },
+    "language": {
+      "title": "Langue"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "email": {
+        "label": "Notifications par email",
+        "desc": "Recevoir les mises à jour importantes"
+      },
+      "matching": {
+        "label": "Alertes de matching",
+        "desc": "Recevoir les nouveaux profils compatibles"
+      },
+      "messages": {
+        "label": "Messages",
+        "desc": "Recevoir les nouveaux messages et demandes"
+      }
+    },
+    "privacy": {
+      "title": "Confidentialité",
+      "publicProfile": {
+        "label": "Profil public",
+        "desc": "Visible dans les annuaires et résultats de recherche"
+      },
+      "showEmail": {
+        "label": "Afficher l'email",
+        "desc": "Permettre aux autres utilisateurs de voir votre email"
+      },
+      "saveError": "Impossible d'enregistrer ce paramètre."
+    },
+    "security": {
+      "title": "Sécurité",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmation",
+      "changeBtn": "Changer le mot de passe",
+      "errors": {
+        "tooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+        "mismatch": "Les mots de passe ne correspondent pas."
+      },
+      "success": "Mot de passe mis à jour."
+    },
+    "kycTitle": "Vérification KYC",
+    "subscription": {
+      "title": "Abonnement",
+      "planLabel": "Plan {{plan}}",
+      "plans": {
+        "free": "Gratuit",
+        "pro": "Pro",
+        "business": "Business"
+      },
+      "renewal": "Renouvellement : {{date}}",
+      "featuresByPlan": "Fonctionnalités selon votre plan"
+    },
+    "danger": {
+      "title": "Zone de danger",
+      "signOut": "Déconnexion",
+      "deleteAccount": "Supprimer mon compte",
+      "notice": "La suppression du compte est irréversible. Les données seront supprimées selon les règles de conservation applicables.",
+      "dialogTitle": "Supprimer le compte ?",
+      "dialogDesc": "Cette action est définitive. Vérifiez que vous souhaitez réellement supprimer votre compte et les données associées.",
+      "cancel": "Annuler",
+      "confirm": "Confirmer la suppression",
+      "deleteError": "Erreur lors de la suppression du compte.",
+      "sessionExpired": "Session expirée.",
+      "deleteFailed": "Suppression impossible."
+    }
   },
   "pitchV2": {
     "annotationOverlay": {
@@ -1051,5 +1133,47 @@
         "other": "Autre"
       }
     }
+  },
+  "kyc": {
+    "sectionStatusLabel": "Statut KYC",
+    "status": {
+      "pending": {
+        "label": "Non soumis",
+        "desc": "Soumettez vos documents pour faire vérifier votre profil et apparaître dans l'annuaire."
+      },
+      "submitted": {
+        "label": "En cours de vérification",
+        "desc": "Votre dossier est en cours d'examen. Vous serez notifié une fois la vérification terminée."
+      },
+      "verified": {
+        "label": "Vérifié",
+        "desc": "Votre profil est vérifié et visible dans l'annuaire."
+      },
+      "rejected": {
+        "label": "Rejeté",
+        "desc": "Votre soumission a été rejetée. Veuillez soumettre à nouveau avec des documents valides."
+      }
+    },
+    "idTypeLabel": "Type de pièce d'identité",
+    "idType": {
+      "cnib": "CNIB (Burkina Faso)",
+      "passport": "Passeport",
+      "carteConsulaire": "Carte consulaire",
+      "titreSejour": "Titre de séjour"
+    },
+    "idNumberLabel": "Numéro du document",
+    "idNumberPlaceholder": "Ex: B0123456789",
+    "uploadLabel": "Téléverser le document d'identité",
+    "uploadHint": "PDF, JPG, PNG ou WebP — max 10 Mo",
+    "submitBtn": "Soumettre la vérification KYC",
+    "submitting": "Téléversement et envoi...",
+    "errors": {
+      "unsupportedFormat": "Format non supporté. Utilisez PDF, JPG, PNG ou WebP.",
+      "fileTooLarge": "Fichier trop volumineux. Taille maximale : 10 Mo.",
+      "idNumberRequired": "Numéro d'identité requis",
+      "documentRequired": "Veuillez téléverser votre document d'identité",
+      "submitFailed": "Erreur lors de la soumission"
+    },
+    "submitSuccess": "KYC soumis ! Votre vérification est en cours de traitement."
   }
 }
