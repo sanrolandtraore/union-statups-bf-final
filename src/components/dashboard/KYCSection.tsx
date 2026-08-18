@@ -79,14 +79,18 @@ const KYCSection = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 rounded-lg bg-secondary/50 px-4 py-3"><div>{status.icon}</div><div className="flex-1"><div className="flex items-center gap-2"><p className="text-sm font-semibold text-foreground">{t("kyc.sectionStatusLabel")}</p><Badge className={status.color}>{status.label}</Badge></div><p className="mt-1 text-xs text-muted-foreground">{status.desc}</p></div></div>
-      {(kycStatus === "pending" || kycStatus === "rejected") && (
-        <div className="space-y-4 rounded-lg border border-border p-4">
+      {/* On garde ce bloc monté en permanence (juste masqué en CSS une fois
+          soumis) plutôt que de le démonter conditionnellement : démonter un
+          conteneur contenant un <Select> Radix pile au moment où son état
+          interne de fermeture de menu est encore en cours de nettoyage
+          provoque une exception DOM ("removeChild... not a child of this
+          node") — React et Radix se disputent le retrait du même nœud. */}
+      <div className={(kycStatus === "pending" || kycStatus === "rejected") ? "space-y-4 rounded-lg border border-border p-4" : "hidden"}>
           <div className="space-y-2"><Label>{t("kyc.idTypeLabel")}</Label><Select value={idType} onValueChange={setIdType}><SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="cnib">{t("kyc.idType.cnib")}</SelectItem><SelectItem value="passport">{t("kyc.idType.passport")}</SelectItem><SelectItem value="carte_consulaire">{t("kyc.idType.carteConsulaire")}</SelectItem><SelectItem value="titre_sejour">{t("kyc.idType.titreSejour")}</SelectItem></SelectContent></Select></div>
           <div className="space-y-2"><Label>{t("kyc.idNumberLabel")}</Label><Input value={idNumber} onChange={(e) => setIdNumber(e.target.value)} placeholder={t("kyc.idNumberPlaceholder")} className="bg-secondary border-border" autoComplete="off" /></div>
           <div className="rounded-lg border border-dashed border-border p-6 text-center"><label className="block cursor-pointer"><Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" /><p className="text-sm font-medium text-foreground">{t("kyc.uploadLabel")}</p><p className="text-xs text-muted-foreground mt-1">{t("kyc.uploadHint")}</p><input type="file" className="sr-only" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => handleFileChange(e.target.files?.[0] || null)} disabled={loading} /></label>{documentFile && <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-xs text-foreground"><FileCheck2 className="h-4 w-4 text-primary" />{documentFile.name}</div>}</div>
           <Button onClick={handleSubmit} disabled={loading || !documentFile} className="w-full bg-primary text-primary-foreground font-semibold"><ShieldCheck className="mr-2 h-4 w-4" />{loading ? t("kyc.submitting") : t("kyc.submitBtn")}</Button>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

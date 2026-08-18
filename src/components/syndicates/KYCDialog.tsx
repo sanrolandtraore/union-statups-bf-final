@@ -72,8 +72,12 @@ const KYCDialog = ({ open, onOpenChange, memberId, onSuccess }: Props) => {
           </DialogDescription>
         </DialogHeader>
 
-        {step === 1 ? (
-          <div className="space-y-4 py-4">
+        {/* Les deux étapes restent montées en permanence (juste masquées),
+            plutôt que démontées via une condition — démonter un bloc
+            contenant un <Select> Radix pendant que son menu se ferme encore
+            provoque une exception DOM ("removeChild... not a child of this
+            node"). */}
+        <div className={step === 1 ? "space-y-4 py-4" : "hidden"}>
             <div className="space-y-2">
               <Label>Type de pièce d'identité</Label>
               <Select value={idType} onValueChange={setIdType}>
@@ -113,9 +117,8 @@ const KYCDialog = ({ open, onOpenChange, memberId, onSuccess }: Props) => {
                 {loading ? "Envoi..." : "Soumettre"}
               </Button>
             </DialogFooter>
-          </div>
-        ) : (
-          <div className="py-8 text-center space-y-4">
+        </div>
+        <div className={step === 2 ? "py-8 text-center space-y-4" : "hidden"}>
             <CheckCircle2 className="h-16 w-16 mx-auto text-emerald-400" />
             <div>
               <h4 className="font-display font-bold text-foreground">KYC soumis avec succès</h4>
@@ -123,8 +126,7 @@ const KYCDialog = ({ open, onOpenChange, memberId, onSuccess }: Props) => {
                 Votre vérification sera traitée sous 24-48h
               </p>
             </div>
-          </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
