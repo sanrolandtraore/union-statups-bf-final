@@ -6,6 +6,7 @@ import { Image, Video, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/landing/Navbar";
+import BackButton from "@/components/ui/back-button";
 import Footer from "@/components/landing/Footer";
 
 interface GalleryItem {
@@ -73,6 +74,7 @@ const Gallery = () => {
       <Navbar />
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-6">
+          <BackButton fallbackTo="/" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -16,6 +16,33 @@ type AppRole = "talent" | "startup" | "investor" | "partner";
 
 const getAuthRedirectUrl = () => `${window.location.origin}/auth/callback`;
 
+/** Traduit les messages d'erreur Supabase (en anglais) en messages clairs en français. */
+const translateAuthError = (message: string): string => {
+  const m = message.toLowerCase();
+  if (m.includes("user already registered") || m.includes("already registered")) {
+    return "Un compte existe déjà avec cette adresse e-mail. Connectez-vous ou réinitialisez votre mot de passe.";
+  }
+  if (m.includes("invalid login credentials")) {
+    return "E-mail ou mot de passe incorrect.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "Votre e-mail n'a pas encore été vérifié. Consultez votre boîte de réception.";
+  }
+  if (m.includes("password should be at least") || m.includes("password") && m.includes("character")) {
+    return "Le mot de passe doit contenir au moins 6 caractères.";
+  }
+  if (m.includes("invalid email") || m.includes("unable to validate email")) {
+    return "Adresse e-mail invalide.";
+  }
+  if (m.includes("rate limit") || m.includes("too many requests")) {
+    return "Trop de tentatives. Veuillez patienter quelques minutes avant de réessayer.";
+  }
+  if (m.includes("failed to fetch") || m.includes("networkerror") || m.includes("network request failed")) {
+    return "Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.";
+  }
+  return message;
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -43,10 +70,10 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(translateAuthError(error.message));
       if (/email.*confirm|confirm.*email|not confirmed/i.test(error.message)) {
         setVerificationPending(true);
       }
@@ -64,35 +91,47 @@ const Auth = () => {
     setLoading(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
-      email,
+      email: email.trim(),
       options: { emailRedirectTo: getAuthRedirectUrl() },
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(translateAuthError(error.message));
       return;
     }
     toast.success("L'e-mail de vérification a été renvoyé.");
   };
 
+  const [roleError, setRoleError] = useState(false);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!fullName.trim()) {
+      toast.error("Veuillez indiquer votre nom complet.");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères.");
+      return;
+    }
     if (!selectedRole) {
+      setRoleError(true);
       toast.error(t("auth.selectRole"));
       return;
     }
+    setRoleError(false);
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
-        data: { full_name: fullName, role: selectedRole },
+        data: { full_name: fullName.trim(), role: selectedRole },
         emailRedirectTo: getAuthRedirectUrl(),
       },
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(translateAuthError(error.message));
       return;
     }
 
@@ -109,12 +148,12 @@ const Auth = () => {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(translateAuthError(error.message));
     } else {
       toast.success(t("auth.resetSent"));
       setMode("login");
@@ -184,7 +223,7 @@ const Auth = () => {
                   <div className="space-y-2"><Label htmlFor="fullName">{t("auth.fullName")}</Label><div className="relative"><UserCircle className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="fullName" placeholder={t("auth.yourName")} value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-10" required /></div></div>
                   <div className="space-y-2"><Label htmlFor="signupEmail">{t("auth.email")}</Label><div className="relative"><AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="signupEmail" type="email" placeholder="vous@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required /></div></div>
                   <div className="space-y-2"><Label htmlFor="signupPassword">{t("auth.password")}</Label><div className="relative"><KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input id="signupPassword" type={showPassword ? "text" : "password"} placeholder={t("auth.minChars")} value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10" required minLength={6} /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
-                  <div className="space-y-2"><Label>{t("auth.yourRole")}</Label><div className="grid grid-cols-2 gap-2">{ROLES.map((r) => <button key={r.value} type="button" onClick={() => setSelectedRole(r.value)} className={`rounded-lg border p-3 text-left transition-all ${selectedRole === r.value ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"}`}><div className="text-sm font-medium text-foreground">{r.label}</div><div className="text-xs text-muted-foreground">{r.description}</div></button>)}</div></div>
+                  <div className="space-y-2"><Label>{t("auth.yourRole")}</Label><div className="grid grid-cols-2 gap-2">{ROLES.map((r) => <button key={r.value} type="button" onClick={() => { setSelectedRole(r.value); setRoleError(false); }} className={`rounded-lg border p-3 text-left transition-all ${selectedRole === r.value ? "border-primary bg-primary/10" : roleError ? "border-destructive" : "border-border hover:border-primary/50"}`}><div className="text-sm font-medium text-foreground">{r.label}</div><div className="text-xs text-muted-foreground">{r.description}</div></button>)}</div>{roleError && <p className="text-xs text-destructive">Veuillez sélectionner un rôle pour continuer.</p>}</div>
                   <Button type="submit" className="w-full bg-gradient-gold text-primary-foreground font-semibold" disabled={loading}>{loading ? t("auth.signingUp") : t("auth.signupBtn")}</Button>
                 </form>
               )}

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Briefcase, Search, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/landing/Navbar";
+import BackButton from "@/components/ui/back-button";
 import CreateJobDialog from "@/components/jobs/CreateJobDialog";
 import JobCard from "@/components/jobs/JobCard";
 
@@ -83,6 +84,7 @@ const Jobs = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="mx-auto max-w-6xl px-4 pt-24 pb-16">
+        <BackButton fallbackTo="/" />
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">

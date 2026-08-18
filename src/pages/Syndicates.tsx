@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import SyndicateCard from "@/components/syndicates/SyndicateCard";
 import Navbar from "@/components/landing/Navbar";
+import BackButton from "@/components/ui/back-button";
 import Footer from "@/components/landing/Footer";
 import type { Syndicate } from "@/types/syndicate";
 import { formatCFA } from "@/types/syndicate";
@@ -113,6 +114,9 @@ const Syndicates = () => {
       {/* HERO — blast.club inspired */}
       <section className="relative overflow-hidden pt-28 pb-24">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-background" />
+        <div className="container relative mx-auto px-6">
+          <BackButton fallbackTo="/dashboard" />
+        </div>
         {/* Decorative blobs */}
         <div className="absolute top-20 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl" />

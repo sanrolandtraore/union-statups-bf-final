@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { useScrollToHash } from "@/hooks/useScrollToHash";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -50,6 +51,11 @@ const queryClient = new QueryClient({
 
 const PageLoader = () => <PageSkeleton />;
 
+const ScrollToHashHandler = () => {
+  useScrollToHash();
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -58,6 +64,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <ScrollToHashHandler />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />

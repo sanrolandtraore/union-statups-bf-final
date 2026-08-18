@@ -17,7 +17,7 @@ const AboutSection = () => {
   ];
 
   return (
-    <section className="py-12 sm:py-20">
+    <section id="about" className="py-12 sm:py-20">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col items-center gap-8 sm:gap-12 md:flex-row">
           {/* Left: images grid */}

@@ -15,7 +15,7 @@ const ProfileSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-secondary/30">
+    <section id="roles" className="py-24 bg-secondary/30">
       <div className="container mx-auto px-6">
         <SectionHeading
           className="mb-16"

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/landing/Navbar";
+import BackButton from "@/components/ui/back-button";
 import Footer from "@/components/landing/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ const Blog = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto max-w-5xl px-6 pb-20 pt-28">
+        <BackButton fallbackTo="/" />
         <div className="mb-10 text-center">
           <h1 className="mb-3 font-display text-4xl font-bold text-foreground">{t("pagesV2.blog.title")}</h1>
           <p className="text-muted-foreground">{t("pagesV2.blog.subtitle")}</p>

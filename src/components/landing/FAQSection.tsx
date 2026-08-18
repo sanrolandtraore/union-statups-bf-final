@@ -21,7 +21,7 @@ const FAQSection = () => {
   ];
 
   return (
-    <section className="py-24">
+    <section id="faq" className="py-24">
       <div className="container mx-auto px-6 max-w-3xl">
         <SectionHeading
           className="mb-12"

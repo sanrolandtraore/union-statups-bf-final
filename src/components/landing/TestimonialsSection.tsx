@@ -29,7 +29,7 @@ const TestimonialsSection = () => {
   const testimonials = i18n.language?.startsWith("en") ? testimonialsEn : testimonialsFr;
 
   return (
-    <section className="py-24 bg-card/50">
+    <section id="testimonials" className="py-24 bg-card/50">
       <div className="container mx-auto px-6">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-16 text-center">
           <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlatformStats, formatStat } from "@/hooks/usePlatformStats";
 import Navbar from "@/components/landing/Navbar";
+import BackButton from "@/components/ui/back-button";
 import Footer from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,7 @@ const StartupSchool = () => {
       <section className="relative overflow-hidden pt-28 pb-20">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
         <div className="container relative mx-auto px-6 text-center">
+          <BackButton fallbackTo="/dashboard" className="mb-6 float-left" />
           <Badge variant="outline" className="mb-4 border-primary/30 bg-primary/5 px-4 py-1.5 text-primary">
             <GraduationCap className="mr-2 h-4 w-4" />
             {t("school.badge")}

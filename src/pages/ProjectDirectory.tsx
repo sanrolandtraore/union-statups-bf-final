@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/landing/Navbar";
+import BackButton from "@/components/ui/back-button";
 import Footer from "@/components/landing/Footer";
 import ProfileDetailDialog from "@/components/dashboard/ProfileDetailDialog";
 
@@ -76,6 +77,7 @@ const ProjectDirectory = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-24">
+        <BackButton fallbackTo="/" />
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-foreground">
