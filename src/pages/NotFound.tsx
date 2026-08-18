@@ -27,7 +27,7 @@ const NotFound = () => {
             <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" />Retour à l'accueil</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to="/projects"><Search className="mr-2 h-4 w-4" />Explorer les projets</Link>
+            <Link to="/projets"><Search className="mr-2 h-4 w-4" />Explorer les projets</Link>
           </Button>
         </div>
         <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-xs text-muted-foreground">
