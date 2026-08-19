@@ -1,23 +1,19 @@
-import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 
 const ThemeSwitcher = () => {
   const { theme, toggleTheme } = useTheme();
+  const nextLabel = theme === "dark" ? "Mode clair" : "Mode sombre";
 
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="sm"
       onClick={toggleTheme}
-      className="h-8 w-8 rounded-lg"
-      aria-label={theme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
+      className="h-8 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+      aria-label={`Activer le ${nextLabel.toLowerCase()}`}
     >
-      {theme === "dark" ? (
-        <Sun className="h-4 w-4 text-muted-foreground transition-colors hover:text-foreground" />
-      ) : (
-        <Moon className="h-4 w-4 text-muted-foreground transition-colors hover:text-foreground" />
-      )}
+      {nextLabel}
     </Button>
   );
 };

@@ -1923,6 +1923,78 @@ export type Database = {
         }
         Relationships: []
       }
+      project_access_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          nda_accepted: boolean
+          nda_accepted_at: string | null
+          owner_user_id: string
+          project_id: string
+          requester_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          nda_accepted?: boolean
+          nda_accepted_at?: string | null
+          owner_user_id: string
+          project_id: string
+          requester_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          nda_accepted?: boolean
+          nda_accepted_at?: string | null
+          owner_user_id?: string
+          project_id?: string
+          requester_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      project_security: {
+        Row: {
+          created_at: string
+          nda_required: boolean
+          owner_user_id: string
+          project_id: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          nda_required?: boolean
+          owner_user_id: string
+          project_id: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          nda_required?: boolean
+          owner_user_id?: string
+          project_id?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       rate_limit_hits: {
         Row: {
           bucket_key: string
@@ -2731,6 +2803,47 @@ export type Database = {
       can_view_contact_info: {
         Args: { p_target_user_id: string }
         Returns: boolean
+      }
+      can_view_project: {
+        Args: { _project_id: string; _viewer_id: string }
+        Returns: boolean
+      }
+      project_access_state: {
+        Args: { _project_id: string; _viewer_id: string }
+        Returns: {
+          can_view: boolean
+          nda_required: boolean
+          request_status: string
+          requester_nda_accepted: boolean
+          visibility: string
+        }[]
+      }
+      search_projects_safe: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_sector?: string
+          p_stage?: string
+        }
+        Returns: {
+          advancement_stage: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          is_protected: boolean
+          looking_for: string[]
+          nda_required: boolean
+          owner_avatar: string
+          owner_name: string
+          sector: string
+          skills_needed: string[]
+          title: string
+          total_count: number
+          user_id: string
+          visibility: string
+        }[]
       }
       get_public_platform_stats: {
         Args: Record<PropertyKey, never>
