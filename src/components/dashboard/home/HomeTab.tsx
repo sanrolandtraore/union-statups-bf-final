@@ -330,9 +330,6 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
           <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
             {greeting}, {profile?.full_name?.split(" ")[0] || "bienvenue"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Voici votre tableau de bord Union'S — inspiré des meilleurs accélérateurs.
-          </p>
         </div>
         {profile?.is_verified ? (
           <Badge className="w-fit bg-emerald-500/10 text-emerald-500 border-emerald-500/20">

@@ -33,7 +33,6 @@ const DiscoveryHome = () => {
         <div className="container relative mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
           <div className="mx-auto max-w-5xl text-center">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary"><ShieldCheck className="h-4 w-4" /> Écosystème vérifié</span>
               <h1 className="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">L'écosystème de confiance pour les <span className="text-primary">projets, talents et investisseurs.</span></h1>
               <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">Union'S est le Hub Digital qui structure l'écosystème entrepreneurial africain : découvrez, connectez-vous et collaborez dans un environnement sécurisé et vérifié.</p>
             </motion.div>
@@ -54,7 +53,6 @@ const DiscoveryHome = () => {
       </section>
       <section className="container mx-auto px-4 py-14 sm:px-6 lg:py-20">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Découvrir</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Que souhaitez-vous faire ?</h2>
         <p className="mt-2 max-w-2xl text-muted-foreground">Accédez directement aux fonctionnalités réelles de l'écosystème Union'S.</p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {discoveryCards.map((card, index) => { const Icon = card.icon; return <motion.div key={card.href} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ delay: index * 0.04 }}><Link to={card.href} className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"><div className="flex items-start justify-between"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span><ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="mt-5 text-xl font-semibold">{card.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{card.description}</p></Link></motion.div>; })}

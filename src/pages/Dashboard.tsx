@@ -37,13 +37,7 @@ const Dashboard = () => {
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
       <div className="relative min-h-full">
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-40 bg-gradient-to-b from-primary/[0.06] to-transparent" />
-        <div className="relative z-10 mb-4 flex items-center justify-between gap-3 px-1">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Union'S</p>
-            <h1 className="mt-1 truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-              Votre espace entrepreneurial
-            </h1>
-          </div>
+        <div className="relative z-10 mb-4 flex items-center justify-end gap-3 px-1">
           {role === "admin" && (
             <Badge variant="outline" className="shrink-0 border-primary/30 bg-primary/5 text-primary">
               Administration

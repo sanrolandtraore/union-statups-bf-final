@@ -49,7 +49,7 @@ const StartupSchoolSection = () => {
           </div>
           <Badge className="mb-4 bg-green-500/15 text-green-500 border-0 px-3 py-1 inline-flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            {t("school.availableNow")}
+            {t("school.badge")}
           </Badge>
           <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
             {t("landing.schoolTitle")}{" "}

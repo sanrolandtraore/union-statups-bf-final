@@ -16,11 +16,10 @@
     "school": "Startup School"
   },
   "school": {
-    "badge": "Union'S digital accelerator — Available now",
+    "badge": "Union'S digital accelerator",
     "heroTitle": "The digital accelerator",
     "heroHighlight": "by Union'S",
-    "heroDesc": "Startup School is Union'S 100% digital accelerator: mentorship, structured programs, masterclasses and personalized coaching to propel your startup. Available right now.",
-    "availableNow": "Available now",
+    "heroDesc": "Startup School is Union'S 100% digital accelerator: mentorship, structured programs, masterclasses and personalized coaching to propel your startup.",
     "ctaMentors": "Discover mentors",
     "ctaPrograms": "View programs",
     "quickAccessBtn": "Access now",

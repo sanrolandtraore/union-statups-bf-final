@@ -16,11 +16,10 @@
     "school": "Startup School"
   },
   "school": {
-    "badge": "L'accélérateur digital de Union'S — Disponible maintenant",
+    "badge": "L'accélérateur digital de Union'S",
     "heroTitle": "L'accélérateur digital",
     "heroHighlight": "de Union'S",
-    "heroDesc": "La Startup School est l'accélérateur 100% digital de Union'S : mentorat, programmes structurés, masterclasses et coaching personnalisé pour propulser votre startup. Disponible dès maintenant.",
-    "availableNow": "Disponible maintenant",
+    "heroDesc": "La Startup School est l'accélérateur 100% digital de Union'S : mentorat, programmes structurés, masterclasses et coaching personnalisé pour propulser votre startup.",
     "ctaMentors": "Découvrir les mentors",
     "ctaPrograms": "Voir les programmes",
     "quickAccessBtn": "Accéder maintenant",
