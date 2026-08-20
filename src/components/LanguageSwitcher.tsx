@@ -19,7 +19,18 @@ const LanguageSwitcher = ({ variant = "dropdown", className }: LanguageSwitcherP
   const current = LANGUAGES.find((l) => i18n.language?.startsWith(l.code)) ?? LANGUAGES.find((l) => l.code === DEFAULT_LANGUAGE)!;
 
   const change = (code: string) => {
-    if (code !== current.code) i18n.changeLanguage(code);
+    if (code === current.code) return;
+    // `i18n.changeLanguage` déclenche un re-rendu de TOUTE l'application (chaque
+    // composant utilisant useTranslation() se met à jour en même temps). Si cet
+    // appel s'exécute de façon synchrone dans le même tick que la fermeture du
+    // menu déroulant Radix (DropdownMenu) d'où vient le clic, React et Radix se
+    // disputent le retrait du même nœud DOM du portail, provoquant une erreur
+    // "removeChild... not a child of this node" qui peut faire planter N'IMPORTE
+    // QUELLE page de l'application (le composant affecté dépend juste de ce qui
+    // était monté au moment du changement de langue — Dashboard, Jobs, /auth...).
+    // On diffère l'appel d'un tick pour laisser Radix terminer son propre
+    // nettoyage avant de déclencher le re-rendu global.
+    setTimeout(() => i18n.changeLanguage(code), 0);
   };
 
   if (variant === "inline") {

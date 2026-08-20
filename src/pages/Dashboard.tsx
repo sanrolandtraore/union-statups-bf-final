@@ -58,7 +58,7 @@ const Dashboard = () => {
           {activeTab === "settings" && <SettingsTab />}
           {activeTab === "admin" && role === "admin" && <AdminTab />}
           {activeTab === "investment-club" && <InvestmentClubTab />}
-          {activeTab === "incubation" && <IncubationTab />}
+          {activeTab === "incubation" && (role === "startup" || role === "admin") && <IncubationTab />}
         </Suspense>
         <AIAssistant />
       </div>

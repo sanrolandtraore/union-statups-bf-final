@@ -13,11 +13,34 @@ interface State {
 class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
+  componentDidMount() {
+    // Un montage réussi signifie que l'app tourne normalement : on autorise
+    // à nouveau un futur rechargement automatique si un chunk venait à
+    // manquer plus tard dans la session (nouveau déploiement entre-temps).
+    sessionStorage.removeItem("union_chunk_reload_attempted");
+  }
+
   static getDerivedStateFromError(): State {
     return { hasError: true };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // Un déploiement récent a supprimé les anciens fichiers JS (chunks) alors
+    // que l'utilisateur avait encore l'ancienne version chargée dans son
+    // navigateur : le prochain clic sur une page chargée à la demande (lazy)
+    // échoue avec "Failed to fetch dynamically imported module". Plutôt que
+    // d'afficher un écran d'erreur pour un simple souci de cache, on recharge
+    // automatiquement une seule fois (drapeau en sessionStorage pour éviter
+    // une boucle infinie si le problème persiste réellement).
+    const isChunkLoadError = /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed/i.test(error.message);
+    if (isChunkLoadError) {
+      const key = "union_chunk_reload_attempted";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return;
+      }
+    }
     // Envoie l'erreur au service de monitoring (voir src/lib/monitoring.ts).
     // N'affecte jamais le rendu : reportError est volontairement infaillible.
     reportError(error, { componentStack: info.componentStack });
