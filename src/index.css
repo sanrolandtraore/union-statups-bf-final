@@ -54,6 +54,18 @@
     --gradient-dark: linear-gradient(180deg, hsl(220 20% 4%), hsl(220 18% 8%));
     --shadow-gold: 0 8px 32px -8px hsl(38 92% 55% / 0.25);
     --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.4);
+
+    /* Palette d'icônes à 3 couleurs (orange / bleu / noir-blanc) — alterne
+       entre ces 3 teintes plutôt qu'une seule couleur uniforme partout. */
+    --icon-orange: 38 92% 55%;
+    --icon-blue: 210 90% 58%;
+    --icon-black: 45 20% 95%;
+  }
+
+  .light {
+    --icon-orange: 38 92% 50%;
+    --icon-blue: 210 85% 48%;
+    --icon-black: 220 20% 12%;
   }
 
   .light {

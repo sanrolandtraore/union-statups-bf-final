@@ -29,6 +29,9 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
+        "icon-orange": "hsl(var(--icon-orange))",
+        "icon-blue": "hsl(var(--icon-blue))",
+        "icon-black": "hsl(var(--icon-black))",
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

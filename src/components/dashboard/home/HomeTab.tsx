@@ -359,7 +359,7 @@ const HomeTab = ({ onTabChange }: HomeTabProps) => {
                 className="rounded-xl border border-border bg-background/50 p-4"
               >
                 <div className="mb-2 flex items-center gap-2">
-                  <s.icon className="h-4 w-4 text-primary" />
+                  <s.icon className={`h-4 w-4 ${i % 3 === 0 ? "text-icon-orange" : i % 3 === 1 ? "text-icon-blue" : "text-icon-black"}`} />
                   <span className="text-xs text-muted-foreground">{s.label}</span>
                 </div>
                 <p className="font-display text-2xl font-bold text-foreground">{s.value}</p>

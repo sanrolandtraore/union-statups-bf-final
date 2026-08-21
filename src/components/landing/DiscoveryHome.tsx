@@ -7,13 +7,19 @@ import { Button } from "@/components/ui/button";
 import { usePlatformStats, formatStat } from "@/hooks/usePlatformStats";
 
 const discoveryCards = [
-  { title: "Talents", description: "Trouvez les profils et compétences dont vos projets ont besoin.", href: "/talents", icon: Users },
-  { title: "Projets", description: "Découvrez les startups et projets de l'écosystème Union'S.", href: "/projets", icon: Sparkles },
-  { title: "Opportunités", description: "Emplois, missions, stages, cofondateurs et advisory.", href: "/jobs", icon: BriefcaseBusiness },
-  { title: "Investissement", description: "Explorez les syndicats, deals et opportunités disponibles.", href: "/syndicates", icon: Landmark },
-  { title: "Pitch Rooms", description: "Participez aux présentations et retrouvez les replays.", href: "/pitch-rooms", icon: Video },
-  { title: "Startup School", description: "Accédez aux mentors, programmes et contenus publiés.", href: "/startup-school", icon: GraduationCap },
+  { title: "Talents", description: "Trouvez les profils et compétences dont vos projets ont besoin.", href: "/talents", icon: Users, color: "orange" as const },
+  { title: "Projets", description: "Découvrez les startups et projets de l'écosystème Union'S.", href: "/projets", icon: Sparkles, color: "blue" as const },
+  { title: "Opportunités", description: "Emplois, missions, stages, cofondateurs et advisory.", href: "/jobs", icon: BriefcaseBusiness, color: "black" as const },
+  { title: "Investissement", description: "Explorez les syndicats, deals et opportunités disponibles.", href: "/syndicates", icon: Landmark, color: "orange" as const },
+  { title: "Pitch Rooms", description: "Participez aux présentations et retrouvez les replays.", href: "/pitch-rooms", icon: Video, color: "blue" as const },
+  { title: "Startup School", description: "Accédez aux mentors, programmes et contenus publiés.", href: "/startup-school", icon: GraduationCap, color: "black" as const },
 ];
+
+const iconColorClasses = {
+  orange: "bg-icon-orange/10 text-icon-orange",
+  blue: "bg-icon-blue/10 text-icon-blue",
+  black: "bg-icon-black/10 text-icon-black",
+};
 
 const DiscoveryHome = () => {
   const navigate = useNavigate();
@@ -55,13 +61,13 @@ const DiscoveryHome = () => {
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Découvrir</p>
         <p className="mt-2 max-w-2xl text-muted-foreground">Accédez directement aux fonctionnalités réelles de l'écosystème Union'S.</p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {discoveryCards.map((card, index) => { const Icon = card.icon; return <motion.div key={card.href} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ delay: index * 0.04 }}><Link to={card.href} className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"><div className="flex items-start justify-between"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span><ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="mt-5 text-xl font-semibold">{card.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{card.description}</p></Link></motion.div>; })}
+          {discoveryCards.map((card, index) => { const Icon = card.icon; return <motion.div key={card.href} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ delay: index * 0.04 }}><Link to={card.href} className="group block h-full rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"><div className="flex items-start justify-between"><span className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconColorClasses[card.color]}`}><Icon className="h-5 w-5" /></span><ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="mt-5 text-xl font-semibold">{card.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{card.description}</p></Link></motion.div>; })}
         </div>
       </section>
       <section className="border-y border-border bg-muted/30">
         <div className="container mx-auto grid gap-8 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-20">
           <div><p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Confiance</p><h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Une expérience conçue autour de la confiance.</h2><p className="mt-4 leading-7 text-muted-foreground">Union'S met en avant les informations de profil, la vérification, la réputation et les connexions pertinentes afin de permettre des décisions mieux informées.</p></div>
-          <div className="grid gap-3 sm:grid-cols-2">{['Profils vérifiés','Projets et opportunités réels','Connexions pertinentes','Données protégées'].map((item) => <div key={item} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"><ShieldCheck className="h-5 w-5 shrink-0 text-primary" /><span className="text-sm font-medium">{item}</span></div>)}</div>
+          <div className="grid gap-3 sm:grid-cols-2">{[['Profils vérifiés','orange'],['Projets et opportunités réels','blue'],['Connexions pertinentes','black'],['Données protégées','orange']].map(([item, color]) => <div key={item} className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"><ShieldCheck className={`h-5 w-5 shrink-0 ${color === 'orange' ? 'text-icon-orange' : color === 'blue' ? 'text-icon-blue' : 'text-icon-black'}`} /><span className="text-sm font-medium">{item}</span></div>)}</div>
         </div>
       </section>
       <section className="container mx-auto px-4 py-14 text-center sm:px-6 lg:py-20">
