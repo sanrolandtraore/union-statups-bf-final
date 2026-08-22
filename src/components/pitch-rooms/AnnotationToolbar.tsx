@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Pencil, Square, Circle, Eraser, Trash2, X, Minus } from "lucide-react";
+import { Pencil, Square, Circle, Eraser, Trash2, X, Minus, Highlighter, MoveUpRight, Type } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-export type AnnotationTool = "pen" | "line" | "rect" | "circle" | "text" | "eraser";
+export type AnnotationTool = "pen" | "highlighter" | "line" | "arrow" | "rect" | "circle" | "text" | "eraser";
 
 interface Props {
   activeTool: AnnotationTool;
@@ -28,9 +28,12 @@ const AnnotationToolbar = ({
 
   const tools: { tool: AnnotationTool; icon: LucideIcon; label: string }[] = [
     { tool: "pen", icon: Pencil, label: t("pitchV2.annotationToolbar.pen") },
+    { tool: "highlighter", icon: Highlighter, label: t("pitchV2.annotationToolbar.highlighter", "Surligneur") },
     { tool: "line", icon: Minus, label: t("pitchV2.annotationToolbar.line") },
+    { tool: "arrow", icon: MoveUpRight, label: t("pitchV2.annotationToolbar.arrow", "Flèche") },
     { tool: "rect", icon: Square, label: t("pitchV2.annotationToolbar.rect") },
     { tool: "circle", icon: Circle, label: t("pitchV2.annotationToolbar.circle") },
+    { tool: "text", icon: Type, label: t("pitchV2.annotationToolbar.text", "Texte") },
     { tool: "eraser", icon: Eraser, label: t("pitchV2.annotationToolbar.eraser") },
   ];
 

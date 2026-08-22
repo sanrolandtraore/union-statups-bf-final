@@ -10,6 +10,7 @@ export interface PitchRoom {
   ended_at: string | null;
   max_participants: number;
   is_recording: boolean;
+  is_locked: boolean;
   recording_url: string | null;
   cover_image_url: string | null;
   tags: string[];
@@ -19,9 +20,32 @@ export interface PitchRoom {
     qa_enabled: boolean;
     hand_raise_enabled: boolean;
     waiting_room: boolean;
+    egress_id?: string | null;
+    recording_filepath?: string | null;
   };
   created_at: string;
   updated_at: string;
+}
+
+// Rôles internes host/moderator/speaker/viewer ≈ Host/Co-host/Speaker/Participant
+export const ROLE_LABELS: Record<string, string> = {
+  host: "Host",
+  moderator: "Co-host",
+  speaker: "Speaker",
+  viewer: "Participant",
+};
+
+export interface RoomRecording {
+  id: string;
+  room_id: string;
+  organizer_id: string;
+  egress_id: string | null;
+  storage_path: string | null;
+  status: "recording" | "completed" | "failed";
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  created_at: string;
 }
 
 export interface PitchRoomParticipant {
@@ -46,6 +70,8 @@ export interface PitchRoomMessage {
   message_type: "chat" | "question" | "announcement";
   is_pinned: boolean;
   is_answered: boolean;
+  is_anonymous: boolean;
+  upvotes: number;
   parent_id: string | null;
   created_at: string;
 }

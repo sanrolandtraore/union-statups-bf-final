@@ -12,10 +12,11 @@ import PitchRoomParticipants from "@/components/pitch-rooms/PitchRoomParticipant
 import PitchRoomPreJoin from "@/components/pitch-rooms/PitchRoomPreJoin";
 import PitchRoomInvite from "@/components/pitch-rooms/PitchRoomInvite";
 import AnnotationOverlay from "@/components/pitch-rooms/AnnotationOverlay";
+import PitchRoomQA from "@/components/pitch-rooms/PitchRoomQA";
 import type { PitchRoom, PitchRoomParticipant } from "@/types/pitch-room";
-import { ArrowLeft, Users, MessageSquare, X, UserPlus, Hand, LayoutGrid } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, X, UserPlus, Hand, LayoutGrid, Lock, Unlock, MicOff, HelpCircle, Circle, Square, Video } from "lucide-react";
 
-type SidebarTab = "chat" | "participants" | null;
+type SidebarTab = "chat" | "participants" | "qa" | null;
 
 const PitchRoomLive = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +38,39 @@ const PitchRoomLive = () => {
   const isCreator = room?.creator_id === user?.id;
   const myParticipant = participants.find(p => p.user_id === user?.id);
   const canAnnotate = isCreator || myParticipant?.role === "speaker" || myParticipant?.role === "moderator";
+  const isPrivileged = isCreator || myParticipant?.role === "moderator"; // host ou co-host
+  const [muting, setMuting] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [togglingRecord, setTogglingRecord] = useState(false);
+
+  const runAction = async (action: string, extra: Record<string, unknown> = {}) => {
+    if (!id) return;
+    const { data, error } = await supabase.functions.invoke("livekit-token", { body: { roomId: id, action, ...extra } });
+    if (error || data?.error) {
+      toast({ title: "Erreur", description: data?.error || (error as Error)?.message, variant: "destructive" });
+      return null;
+    }
+    return data;
+  };
+
+  const toggleLock = async () => {
+    const data = await runAction("toggle_lock", { locked: !room?.is_locked });
+    if (data) { setRoom(prev => prev ? { ...prev, is_locked: data.locked } : prev); toast({ title: data.locked ? "Salle verrouillée" : "Salle déverrouillée" }); }
+  };
+
+  const muteAll = async () => {
+    setMuting(true);
+    const data = await runAction("mute_all");
+    setMuting(false);
+    if (data) toast({ title: "Tous les micros ont été coupés" });
+  };
+
+  const toggleRecording = async () => {
+    setTogglingRecord(true);
+    const data = await runAction(recording ? "stop_recording" : "start_recording");
+    setTogglingRecord(false);
+    if (data) { setRecording(!recording); toast({ title: recording ? "Enregistrement arrêté" : "Enregistrement démarré" }); }
+  };
 
   const fetchRoom = useCallback(async () => {
     if (!id) return;
@@ -55,6 +89,8 @@ const PitchRoomLive = () => {
   }, [id]);
 
   useEffect(() => { fetchRoom(); }, [fetchRoom]);
+
+  useEffect(() => { if (room) setRecording(room.is_recording); }, [room?.is_recording]);
 
   // Subscribe to participants
   useEffect(() => {
@@ -198,7 +234,8 @@ const PitchRoomLive = () => {
       <div className="border-b border-border bg-card/80 backdrop-blur-xl px-4 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <Badge className="bg-red-500/10 text-red-400 animate-pulse inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-500" />Live</Badge>
-          {room.is_recording && <Badge className="bg-red-500/10 text-red-400 text-xs inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-500" />REC</Badge>}
+          {recording && <Badge className="bg-red-500/10 text-red-400 text-xs inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />REC</Badge>}
+          {room.is_locked && <Badge variant="outline" className="text-xs inline-flex items-center gap-1"><Lock className="h-3 w-3" /></Badge>}
           <h1 className="text-sm font-display font-bold text-foreground truncate max-w-[200px]">{room.title}</h1>
         </div>
         <div className="flex items-center gap-1">
@@ -232,6 +269,33 @@ const PitchRoomLive = () => {
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost" size="icon"
+            onClick={() => setSidebarTab(sidebarTab === "qa" ? null : "qa")}
+            className={`h-8 w-8 ${sidebarTab === "qa" ? "bg-primary/10 text-primary" : ""}`}
+            aria-label="Afficher les questions"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+
+          {isPrivileged && (
+            <>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleLock} title={room.is_locked ? "Déverrouiller la salle" : "Verrouiller la salle"} aria-label="Verrouiller la salle">
+                {room.is_locked ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={muteAll} disabled={muting} title="Couper tous les micros" aria-label="Couper tous les micros">
+                <MicOff className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost" size="icon" className={`h-8 w-8 ${recording ? "text-red-400" : ""}`}
+                onClick={toggleRecording} disabled={togglingRecord}
+                title={recording ? "Arrêter l'enregistrement" : "Démarrer l'enregistrement"}
+                aria-label="Enregistrer"
+              >
+                {recording ? <Square className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+              </Button>
+            </>
+          )}
 
           {isCreator && (
             <>
@@ -264,7 +328,7 @@ const PitchRoomLive = () => {
           >
             <VideoConference />
             <RoomAudioRenderer />
-            <AnnotationOverlay canAnnotate={canAnnotate} />
+            <AnnotationOverlay roomId={room.id} canAnnotate={canAnnotate} />
           </LiveKitRoom>
         </div>
 
@@ -284,6 +348,12 @@ const PitchRoomLive = () => {
               >
                 <Users className="h-3.5 w-3.5 inline mr-1" /> Participants ({joinedCount})
               </button>
+              <button
+                onClick={() => setSidebarTab("qa")}
+                className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${sidebarTab === "qa" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <HelpCircle className="h-3.5 w-3.5 inline mr-1" /> Q&amp;A
+              </button>
               <button onClick={() => setSidebarTab(null)} className="px-2 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
@@ -293,6 +363,7 @@ const PitchRoomLive = () => {
               {sidebarTab === "participants" && (
                 <PitchRoomParticipants roomId={room.id} participants={participants} isCreator={isCreator} />
               )}
+              {sidebarTab === "qa" && <PitchRoomQA roomId={room.id} canModerate={isPrivileged} />}
             </div>
           </div>
         )}

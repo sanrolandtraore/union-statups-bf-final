@@ -89,6 +89,31 @@ async function stopRoomRecording(livekitUrl: string, apiKey: string, apiSecret: 
   return await response.json();
 }
 
+// Coupe le micro de tous les participants (sauf l'appelant), via LiveKit RoomService
+async function muteAllParticipants(livekitUrl: string, apiKey: string, apiSecret: string, roomName: string, exceptIdentity: string) {
+  const httpUrl = getLiveKitHttpUrl(livekitUrl);
+  const token = await createLiveKitApiToken(apiKey, apiSecret);
+  const listRes = await fetch(`${httpUrl}/twirp/livekit.RoomService/ListParticipants`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ room: roomName }),
+  });
+  if (!listRes.ok) { console.error("ListParticipants failed:", await listRes.text()); return; }
+  const { participants } = await listRes.json();
+  for (const p of participants || []) {
+    if (p.identity === exceptIdentity) continue;
+    for (const track of p.tracks || []) {
+      if (track.type === "AUDIO" && !track.muted) {
+        await fetch(`${httpUrl}/twirp/livekit.RoomService/MutePublishedTrack`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ room: roomName, identity: p.identity, track_sid: track.sid, muted: true }),
+        });
+      }
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -132,6 +157,11 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminSupabase = createClient(supabaseUrl, serviceKey);
 
+    // Rôle de l'appelant dans cette room (pour les permissions host/co-host)
+    const { data: callerParticipant } = await adminSupabase
+      .from("pitch_room_participants").select("role").eq("room_id", roomId).eq("user_id", userId).maybeSingle();
+    const isPrivileged = isCreator || callerParticipant?.role === "moderator";
+
     // ─── CREATE ROOM & AUTO-START RECORDING ───
     if (action === "create_room" && isCreator) {
       const livekitRoomName = `pitch-${room.id}`;
@@ -139,7 +169,13 @@ serve(async (req) => {
       let recordingFilepath: string | null = null;
       try {
         const recording = await startRoomRecording(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, livekitRoomName, room.id);
-        if (recording) { egressId = recording.egress_id; recordingFilepath = recording.filepath; }
+        if (recording) {
+          egressId = recording.egress_id; recordingFilepath = recording.filepath;
+          await adminSupabase.from("room_recordings").insert({
+            room_id: room.id, organizer_id: userId, egress_id: egressId,
+            storage_path: recordingFilepath, status: "recording",
+          });
+        }
       } catch (e) { console.error("Recording start failed (non-blocking):", e); }
 
       await adminSupabase.from("pitch_rooms").update({
@@ -167,6 +203,7 @@ serve(async (req) => {
       const { data: existingP } = await adminSupabase.from("pitch_room_participants").select("*").eq("room_id", roomId).eq("user_id", userId).maybeSingle();
       if (existingP?.status === "banned") throw new Error("Vous avez été banni de cette room");
       if (existingP?.status === "kicked") throw new Error("Vous avez été exclu de cette room");
+      if (room.is_locked && !existingP && !isCreator) throw new Error("Cette salle est verrouillée par l'hôte");
 
       const roomSettings = (room.settings as Record<string, unknown>) || {};
       const waitingRoom = roomSettings.waiting_room === true;
@@ -255,18 +292,84 @@ serve(async (req) => {
       });
     }
 
-    // ─── MODERATE ───
-    if (action === "moderate" && isCreator) {
+    // ─── MODERATE (host ou co-host) ───
+    if (action === "moderate" && isPrivileged) {
       const { targetUserId, moderationAction } = body;
+      // Un co-host ne peut pas kick/ban le host
+      const { data: targetP } = await adminSupabase.from("pitch_room_participants").select("role").eq("room_id", roomId).eq("user_id", targetUserId).maybeSingle();
+      if (!isCreator && targetP?.role === "host") throw new Error("Un co-host ne peut pas modérer l'hôte");
+
       if (moderationAction === "kick") {
         await adminSupabase.from("pitch_room_participants").update({ status: "kicked", left_at: new Date().toISOString() }).eq("room_id", roomId).eq("user_id", targetUserId);
       } else if (moderationAction === "ban") {
         await adminSupabase.from("pitch_room_participants").update({ status: "banned", left_at: new Date().toISOString() }).eq("room_id", roomId).eq("user_id", targetUserId);
       } else if (moderationAction === "promote_speaker") {
         await adminSupabase.from("pitch_room_participants").update({ role: "speaker", can_publish_audio: true, can_publish_video: true, hand_raised: false }).eq("room_id", roomId).eq("user_id", targetUserId);
+      } else if (moderationAction === "promote_cohost" && isCreator) {
+        await adminSupabase.from("pitch_room_participants").update({ role: "moderator", can_publish_audio: true, can_publish_video: true }).eq("room_id", roomId).eq("user_id", targetUserId);
       } else if (moderationAction === "demote_viewer") {
         await adminSupabase.from("pitch_room_participants").update({ role: "viewer", can_publish_audio: false, can_publish_video: false }).eq("room_id", roomId).eq("user_id", targetUserId);
       }
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── VERROUILLER / DÉVERROUILLER LA SALLE (host ou co-host) ───
+    if (action === "toggle_lock" && isPrivileged) {
+      const { locked } = body;
+      await adminSupabase.from("pitch_rooms").update({ is_locked: !!locked }).eq("id", roomId);
+      return new Response(JSON.stringify({ success: true, locked: !!locked }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── COUPER TOUS LES MICROS (host ou co-host) ───
+    if (action === "mute_all" && isPrivileged) {
+      if (!room.livekit_room_name) throw new Error("Room non démarrée");
+      try {
+        await muteAllParticipants(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, room.livekit_room_name, userId);
+      } catch (e) { console.error("mute_all failed:", e); }
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── DÉMARRER UN ENREGISTREMENT MANUEL (host ou co-host) ───
+    // Note : LiveKit Egress ne supporte pas de pause native — un "stop" puis
+    // "start" crée un nouveau segment (nouvelle ligne room_recordings).
+    if (action === "start_recording" && isPrivileged) {
+      if (!room.livekit_room_name) throw new Error("Room non démarrée");
+      const recording = await startRoomRecording(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, room.livekit_room_name, room.id);
+      if (!recording) throw new Error("Impossible de démarrer l'enregistrement (vérifier la configuration S3)");
+      const { data: recRow } = await adminSupabase.from("room_recordings").insert({
+        room_id: room.id, organizer_id: room.creator_id, egress_id: recording.egress_id,
+        storage_path: recording.filepath, status: "recording",
+      }).select().single();
+      await adminSupabase.from("pitch_rooms").update({
+        is_recording: true,
+        settings: { ...((room.settings as Record<string, unknown>) || {}), egress_id: recording.egress_id, recording_filepath: recording.filepath },
+      }).eq("id", roomId);
+      return new Response(JSON.stringify({ success: true, recording_id: recRow?.id }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ─── ARRÊTER L'ENREGISTREMENT MANUEL (host ou co-host) ───
+    if (action === "stop_recording" && isPrivileged) {
+      const settings = (room.settings as Record<string, unknown>) || {};
+      const egressId = settings.egress_id as string | null;
+      if (!egressId) throw new Error("Aucun enregistrement en cours");
+      await stopRoomRecording(LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, egressId);
+
+      const { data: recRow } = await adminSupabase.from("room_recordings").select("*").eq("egress_id", egressId).eq("status", "recording").maybeSingle();
+      if (recRow) {
+        const durationSeconds = Math.round((Date.now() - new Date(recRow.started_at).getTime()) / 1000);
+        await adminSupabase.from("room_recordings").update({
+          status: "completed", ended_at: new Date().toISOString(), duration_seconds: durationSeconds,
+        }).eq("id", recRow.id);
+      }
+      await adminSupabase.from("pitch_rooms").update({ is_recording: false }).eq("id", roomId);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -286,6 +389,13 @@ serve(async (req) => {
           const filepath = settings.recording_filepath as string;
           if (s3Bucket && s3Region && filepath) {
             recordingUrl = `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${filepath}`;
+          }
+          const { data: recRow } = await adminSupabase.from("room_recordings").select("*").eq("egress_id", egressId).eq("status", "recording").maybeSingle();
+          if (recRow) {
+            const durationSeconds = Math.round((Date.now() - new Date(recRow.started_at).getTime()) / 1000);
+            await adminSupabase.from("room_recordings").update({
+              status: "completed", ended_at: new Date().toISOString(), duration_seconds: durationSeconds,
+            }).eq("id", recRow.id);
           }
         } catch (e) { console.error("Failed to stop recording:", e); }
       }

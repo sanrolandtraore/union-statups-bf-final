@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRoomContext, useLocalParticipant } from "@livekit/components-react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 import AnnotationToolbar, { type AnnotationTool } from "./AnnotationToolbar";
 
 interface DrawPoint {
@@ -13,16 +14,18 @@ interface DrawAction {
   color: string;
   width: number;
   points: DrawPoint[];
+  text?: string;
 }
 
 interface Props {
+  roomId: string;
   canAnnotate: boolean;
 }
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-const AnnotationOverlay = ({ canAnnotate }: Props) => {
+const AnnotationOverlay = ({ roomId, canAnnotate }: Props) => {
   const { t } = useTranslation();
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -35,9 +38,28 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
   const [strokeWidth, setStrokeWidth] = useState(4);
   const [actions, setActions] = useState<DrawAction[]>([]);
   const [currentAction, setCurrentAction] = useState<DrawAction | null>(null);
+  const [pendingText, setPendingText] = useState<{ point: DrawPoint } | null>(null);
+  const [textInput, setTextInput] = useState("");
   const isDrawing = useRef(false);
 
-  // Redraw all actions onto canvas
+  const strokeStyleFor = (action: DrawAction) => {
+    if (action.tool === "highlighter") return `${action.color}66`;
+    return action.color;
+  };
+
+  const drawArrowHead = (ctx: CanvasRenderingContext2D, from: DrawPoint, to: DrawPoint, canvas: HTMLCanvasElement, width: number) => {
+    const fx = from.x * canvas.width, fy = from.y * canvas.height;
+    const tx = to.x * canvas.width, ty = to.y * canvas.height;
+    const angle = Math.atan2(ty - fy, tx - fx);
+    const headLen = Math.max(10, width * 3);
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - headLen * Math.cos(angle - Math.PI / 6), ty - headLen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - headLen * Math.cos(angle + Math.PI / 6), ty - headLen * Math.sin(angle + Math.PI / 6));
+    ctx.stroke();
+  };
+
   const redraw = useCallback((drawActions: DrawAction[]) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -46,9 +68,17 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (const action of drawActions) {
+      if (action.tool === "text") {
+        if (!action.points.length || !action.text) continue;
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = action.color;
+        ctx.font = `${16 + action.width * 2}px sans-serif`;
+        ctx.fillText(action.text, action.points[0].x * canvas.width, action.points[0].y * canvas.height);
+        continue;
+      }
       if (action.points.length < 1) continue;
-      ctx.strokeStyle = action.tool === "eraser" ? "rgba(0,0,0,0)" : action.color;
-      ctx.lineWidth = action.tool === "eraser" ? action.width * 4 : action.width;
+
+      ctx.lineWidth = action.tool === "eraser" ? action.width * 4 : action.tool === "highlighter" ? action.width * 3 : action.width;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
@@ -57,9 +87,10 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
         ctx.strokeStyle = "rgba(0,0,0,1)";
       } else {
         ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = strokeStyleFor(action);
       }
 
-      if (action.tool === "pen" || action.tool === "eraser") {
+      if (action.tool === "pen" || action.tool === "eraser" || action.tool === "highlighter") {
         ctx.beginPath();
         ctx.moveTo(action.points[0].x * canvas.width, action.points[0].y * canvas.height);
         for (let i = 1; i < action.points.length; i++) {
@@ -67,11 +98,18 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
         }
         ctx.stroke();
       } else if (action.tool === "line" && action.points.length >= 2) {
+        const last = action.points[action.points.length - 1];
         ctx.beginPath();
         ctx.moveTo(action.points[0].x * canvas.width, action.points[0].y * canvas.height);
-        const last = action.points[action.points.length - 1];
         ctx.lineTo(last.x * canvas.width, last.y * canvas.height);
         ctx.stroke();
+      } else if (action.tool === "arrow" && action.points.length >= 2) {
+        const last = action.points[action.points.length - 1];
+        ctx.beginPath();
+        ctx.moveTo(action.points[0].x * canvas.width, action.points[0].y * canvas.height);
+        ctx.lineTo(last.x * canvas.width, last.y * canvas.height);
+        ctx.stroke();
+        drawArrowHead(ctx, action.points[0], last, canvas, action.width);
       } else if (action.tool === "rect" && action.points.length >= 2) {
         const p0 = action.points[0];
         const p1 = action.points[action.points.length - 1];
@@ -94,7 +132,22 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
     ctx.globalCompositeOperation = "source-over";
   }, []);
 
-  // Resize canvas
+  useEffect(() => {
+    const loadExisting = async () => {
+      const { data } = await supabase
+        .from("room_annotations")
+        .select("action")
+        .eq("room_id", roomId)
+        .order("created_at", { ascending: true })
+        .limit(2000);
+      if (data) {
+        const loaded = data.map((r) => r.action as unknown as DrawAction);
+        setActions(loaded);
+      }
+    };
+    loadExisting();
+  }, [roomId]);
+
   useEffect(() => {
     const resize = () => {
       const canvas = canvasRef.current;
@@ -109,7 +162,18 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
     return () => window.removeEventListener("resize", resize);
   }, [actions, redraw]);
 
-  // Broadcast annotation data via LiveKit data channel
+  const persist = useCallback(async (action: DrawAction) => {
+    try {
+      await supabase.from("room_annotations").insert({
+        room_id: roomId,
+        user_id: localParticipant.identity,
+        action: action as unknown as Record<string, unknown>,
+      });
+    } catch {
+      // best-effort — le data channel garantit déjà le temps réel
+    }
+  }, [roomId, localParticipant.identity]);
+
   const broadcast = useCallback((type: string, payload: Record<string, unknown>) => {
     try {
       const msg = JSON.stringify({ type, ...payload });
@@ -119,7 +183,6 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
     }
   }, [localParticipant]);
 
-  // Listen for remote annotation data
   useEffect(() => {
     const handler = (payload: Uint8Array) => {
       try {
@@ -133,21 +196,16 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
         } else if (msg.type === "annotation_clear") {
           setActions([]);
           const canvas = canvasRef.current;
-          if (canvas) {
-            const ctx = canvas.getContext("2d");
-            ctx?.clearRect(0, 0, canvas.width, canvas.height);
-          }
+          if (canvas) canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
         }
       } catch {
         // not an annotation message
       }
     };
-
     room.on("dataReceived", handler);
     return () => { room.off("dataReceived", handler); };
   }, [room, redraw]);
 
-  // Redraw when actions change
   useEffect(() => { redraw(actions); }, [actions, redraw]);
 
   const getRelativePos = (e: React.MouseEvent | React.TouchEvent): DrawPoint => {
@@ -155,24 +213,26 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
-    return {
-      x: (clientX - rect.left) / rect.width,
-      y: (clientY - rect.top) / rect.height,
-    };
+    return { x: (clientX - rect.left) / rect.width, y: (clientY - rect.top) / rect.height };
+  };
+
+  const commitAction = (action: DrawAction) => {
+    setActions(prev => [...prev, action]);
+    broadcast("annotation_action", { action });
+    persist(action);
   };
 
   const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isAnnotating || !canAnnotate) return;
-    isDrawing.current = true;
     const point = getRelativePos(e);
-    const action: DrawAction = {
-      id: crypto.randomUUID(),
-      tool: activeTool,
-      color: activeColor,
-      width: strokeWidth,
-      points: [point],
-    };
-    setCurrentAction(action);
+
+    if (activeTool === "text") {
+      setPendingText({ point });
+      return;
+    }
+
+    isDrawing.current = true;
+    setCurrentAction({ id: crypto.randomUUID(), tool: activeTool, color: activeColor, width: strokeWidth, points: [point] });
   };
 
   const moveDraw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -186,19 +246,26 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
   const endDraw = () => {
     if (!isDrawing.current || !currentAction) return;
     isDrawing.current = false;
-    setActions(prev => [...prev, currentAction]);
-    broadcast("annotation_action", { action: currentAction });
+    commitAction(currentAction);
     setCurrentAction(null);
   };
 
-  const handleClear = () => {
+  const confirmText = () => {
+    if (!pendingText || !textInput.trim()) { setPendingText(null); setTextInput(""); return; }
+    commitAction({
+      id: crypto.randomUUID(), tool: "text", color: activeColor, width: strokeWidth,
+      points: [pendingText.point], text: textInput.trim(),
+    });
+    setPendingText(null);
+    setTextInput("");
+  };
+
+  const handleClear = async () => {
     setActions([]);
     const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      ctx?.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    if (canvas) canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     broadcast("annotation_clear", {});
+    await supabase.from("room_annotations").delete().eq("room_id", roomId);
   };
 
   return (
@@ -227,6 +294,23 @@ const AnnotationOverlay = ({ canAnnotate }: Props) => {
         onTouchMove={moveDraw}
         onTouchEnd={endDraw}
       />
+
+      {pendingText && (
+        <div
+          className="absolute z-50 flex items-center gap-1"
+          style={{ left: `${pendingText.point.x * 100}%`, top: `${pendingText.point.y * 100}%` }}
+        >
+          <input
+            autoFocus
+            value={textInput}
+            onChange={(e) => setTextInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") confirmText(); if (e.key === "Escape") { setPendingText(null); setTextInput(""); } }}
+            onBlur={confirmText}
+            className="bg-card border border-primary rounded px-2 py-1 text-sm text-foreground w-40"
+            placeholder={t("pitchV2.annotationToolbar.textPlaceholder", "Texte…")}
+          />
+        </div>
+      )}
 
       {canAnnotate && !isAnnotating && (
         <button
