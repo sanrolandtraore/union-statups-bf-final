@@ -48,6 +48,34 @@ export interface RoomRecording {
   created_at: string;
 }
 
+export interface PrivateCall {
+  id: string;
+  initiator_id: string;
+  recipient_id: string;
+  status: "pending" | "live" | "ended" | "declined" | "missed";
+  livekit_room_name: string | null;
+  requested_at: string;
+  started_at: string | null;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  created_at: string;
+}
+
+export interface PitchVideo {
+  id: string;
+  owner_id: string;
+  title: string;
+  description: string | null;
+  storage_path: string;
+  thumbnail_path: string | null;
+  duration_seconds: number | null;
+  file_size_bytes: number | null;
+  views_count: number;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PitchRoomParticipant {
   id: string;
   room_id: string;

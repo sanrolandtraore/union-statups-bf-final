@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -215,6 +215,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          message: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          message?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       coaching_sessions: {
         Row: {
           created_at: string
@@ -276,39 +309,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      client_error_logs: {
-        Row: {
-          context: Json | null
-          created_at: string
-          id: string
-          message: string
-          stack: string | null
-          url: string | null
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          context?: Json | null
-          created_at?: string
-          id?: string
-          message: string
-          stack?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          context?: Json | null
-          created_at?: string
-          id?: string
-          message?: string
-          stack?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
       }
       commitments: {
         Row: {
@@ -1604,38 +1604,73 @@ export type Database = {
           },
         ]
       }
+      pitch_room_message_votes: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pitch_room_message_votes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "pitch_room_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pitch_room_messages: {
         Row: {
           created_at: string
           id: string
+          is_anonymous: boolean
           is_answered: boolean
           is_pinned: boolean
           message: string
           message_type: string
           parent_id: string | null
           room_id: string
+          upvotes: number
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           is_answered?: boolean
           is_pinned?: boolean
           message: string
           message_type?: string
           parent_id?: string | null
           room_id: string
+          upvotes?: number
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           is_answered?: boolean
           is_pinned?: boolean
           message?: string
           message_type?: string
           parent_id?: string | null
           room_id?: string
+          upvotes?: number
           user_id?: string
         }
         Relationships: [
@@ -1660,7 +1695,6 @@ export type Database = {
           can_publish_audio: boolean
           can_publish_video: boolean
           created_at: string
-          hand_raised: boolean
           id: string
           joined_at: string | null
           left_at: string | null
@@ -1673,7 +1707,6 @@ export type Database = {
           can_publish_audio?: boolean
           can_publish_video?: boolean
           created_at?: string
-          hand_raised?: boolean
           id?: string
           joined_at?: string | null
           left_at?: string | null
@@ -1686,7 +1719,6 @@ export type Database = {
           can_publish_audio?: boolean
           can_publish_video?: boolean
           created_at?: string
-          hand_raised?: boolean
           id?: string
           joined_at?: string | null
           left_at?: string | null
@@ -1714,6 +1746,7 @@ export type Database = {
           ended_at: string | null
           format: string
           id: string
+          is_locked: boolean
           is_recording: boolean
           livekit_room_name: string | null
           max_participants: number
@@ -1734,6 +1767,7 @@ export type Database = {
           ended_at?: string | null
           format?: string
           id?: string
+          is_locked?: boolean
           is_recording?: boolean
           livekit_room_name?: string | null
           max_participants?: number
@@ -1754,6 +1788,7 @@ export type Database = {
           ended_at?: string | null
           format?: string
           id?: string
+          is_locked?: boolean
           is_recording?: boolean
           livekit_room_name?: string | null
           max_participants?: number
@@ -1765,6 +1800,90 @@ export type Database = {
           tags?: string[] | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      pitch_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          id: string
+          is_published: boolean
+          owner_id: string
+          storage_path: string
+          thumbnail_path: string | null
+          title: string
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          is_published?: boolean
+          owner_id: string
+          storage_path: string
+          thumbnail_path?: string | null
+          title: string
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          is_published?: boolean
+          owner_id?: string
+          storage_path?: string
+          thumbnail_path?: string | null
+          title?: string
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: []
+      }
+      private_calls: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          initiator_id: string
+          livekit_room_name: string | null
+          recipient_id: string
+          requested_at: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          initiator_id: string
+          livekit_room_name?: string | null
+          recipient_id: string
+          requested_at?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          initiator_id?: string
+          livekit_room_name?: string | null
+          recipient_id?: string
+          requested_at?: string
+          started_at?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -1866,6 +1985,94 @@ export type Database = {
           },
         ]
       }
+      project_access_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          nda_accepted: boolean
+          nda_accepted_at: string | null
+          owner_user_id: string
+          project_id: string
+          requester_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          nda_accepted?: boolean
+          nda_accepted_at?: string | null
+          owner_user_id: string
+          project_id: string
+          requester_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          nda_accepted?: boolean
+          nda_accepted_at?: string | null
+          owner_user_id?: string
+          project_id?: string
+          requester_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_access_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_security: {
+        Row: {
+          created_at: string
+          nda_required: boolean
+          owner_user_id: string
+          project_id: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          nda_required?: boolean
+          owner_user_id: string
+          project_id: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          nda_required?: boolean
+          owner_user_id?: string
+          project_id?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_security_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           advancement_stage: string
@@ -1920,78 +2127,6 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      project_access_requests: {
-        Row: {
-          created_at: string
-          id: string
-          message: string | null
-          nda_accepted: boolean
-          nda_accepted_at: string | null
-          owner_user_id: string
-          project_id: string
-          requester_id: string
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message?: string | null
-          nda_accepted?: boolean
-          nda_accepted_at?: string | null
-          owner_user_id: string
-          project_id: string
-          requester_id: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message?: string | null
-          nda_accepted?: boolean
-          nda_accepted_at?: string | null
-          owner_user_id?: string
-          project_id?: string
-          requester_id?: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      project_security: {
-        Row: {
-          created_at: string
-          nda_required: boolean
-          owner_user_id: string
-          project_id: string
-          updated_at: string
-          visibility: string
-        }
-        Insert: {
-          created_at?: string
-          nda_required?: boolean
-          owner_user_id: string
-          project_id: string
-          updated_at?: string
-          visibility?: string
-        }
-        Update: {
-          created_at?: string
-          nda_required?: boolean
-          owner_user_id?: string
-          project_id?: string
-          updated_at?: string
-          visibility?: string
         }
         Relationships: []
       }
@@ -2061,6 +2196,85 @@ export type Database = {
         }
         Relationships: []
       }
+      room_annotations: {
+        Row: {
+          action: Json
+          created_at: string
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          action: Json
+          created_at?: string
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          action?: Json
+          created_at?: string
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_annotations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "pitch_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_recordings: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          egress_id: string | null
+          ended_at: string | null
+          id: string
+          organizer_id: string
+          room_id: string
+          started_at: string
+          status: string
+          storage_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          egress_id?: string | null
+          ended_at?: string | null
+          id?: string
+          organizer_id: string
+          room_id: string
+          started_at?: string
+          status?: string
+          storage_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          egress_id?: string | null
+          ended_at?: string | null
+          id?: string
+          organizer_id?: string
+          room_id?: string
+          started_at?: string
+          status?: string
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_recordings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "pitch_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_requests: {
         Row: {
           company_name: string | null
@@ -2097,6 +2311,63 @@ export type Database = {
           service_type?: string
           status?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      startup_kyc_submissions: {
+        Row: {
+          company_legal_name: string
+          created_at: string
+          id: string
+          ifu_number: string | null
+          incorporation_document_url: string | null
+          legal_rep_full_name: string
+          legal_rep_id_document_url: string | null
+          rccm_document_url: string | null
+          rccm_number: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_legal_name: string
+          created_at?: string
+          id?: string
+          ifu_number?: string | null
+          incorporation_document_url?: string | null
+          legal_rep_full_name: string
+          legal_rep_id_document_url?: string | null
+          rccm_document_url?: string | null
+          rccm_number: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_legal_name?: string
+          created_at?: string
+          id?: string
+          ifu_number?: string | null
+          incorporation_document_url?: string | null
+          legal_rep_full_name?: string
+          legal_rep_id_document_url?: string | null
+          rccm_document_url?: string | null
+          rccm_number?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2808,48 +3079,11 @@ export type Database = {
         Args: { _project_id: string; _viewer_id: string }
         Returns: boolean
       }
-      project_access_state: {
-        Args: { _project_id: string; _viewer_id: string }
-        Returns: {
-          can_view: boolean
-          nda_required: boolean
-          request_status: string
-          requester_nda_accepted: boolean
-          visibility: string
-        }[]
-      }
-      search_projects_safe: {
-        Args: {
-          p_limit?: number
-          p_offset?: number
-          p_search?: string
-          p_sector?: string
-          p_stage?: string
-        }
-        Returns: {
-          advancement_stage: string
-          city: string
-          created_at: string
-          description: string
-          id: string
-          is_protected: boolean
-          looking_for: string[]
-          nda_required: boolean
-          owner_avatar: string
-          owner_name: string
-          sector: string
-          skills_needed: string[]
-          title: string
-          total_count: number
-          user_id: string
-          visibility: string
-        }[]
-      }
       get_public_platform_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
-          content_hours: number
           coaching_sessions: number
+          content_hours: number
           investors: number
           jobs: number
           mentors: number
@@ -2884,6 +3118,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_video_views: { Args: { video_id: string }; Returns: undefined }
       is_incubation_mentor: {
         Args: { _track_id: string; _user_id: string }
         Returns: boolean
@@ -2899,6 +3134,16 @@ export type Database = {
       is_syndicate_member: {
         Args: { _syndicate_id: string; _user_id: string }
         Returns: boolean
+      }
+      project_access_state: {
+        Args: { _project_id: string; _viewer_id: string }
+        Returns: {
+          can_view: boolean
+          nda_required: boolean
+          request_status: string
+          requester_nda_accepted: boolean
+          visibility: string
+        }[]
       }
       search_projects: {
         Args: {
@@ -2922,6 +3167,33 @@ export type Database = {
           title: string
           total_count: number
           user_id: string
+        }[]
+      }
+      search_projects_safe: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_sector?: string
+          p_stage?: string
+        }
+        Returns: {
+          advancement_stage: string
+          city: string
+          created_at: string
+          description: string
+          id: string
+          is_protected: boolean
+          looking_for: string[]
+          nda_required: boolean
+          owner_avatar: string
+          owner_name: string
+          sector: string
+          skills_needed: string[]
+          title: string
+          total_count: number
+          user_id: string
+          visibility: string
         }[]
       }
       search_talents: {

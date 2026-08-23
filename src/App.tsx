@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import IncomingCallWidget from "@/components/calls/IncomingCallWidget";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useScrollToHash } from "@/hooks/useScrollToHash";
 
@@ -30,6 +31,8 @@ const PitchRooms = lazy(() => import("./pages/PitchRooms"));
 const PitchRoomLive = lazy(() => import("./pages/PitchRoomLive"));
 const PitchRoomReplay = lazy(() => import("./pages/PitchRoomReplay"));
 const MyRecordings = lazy(() => import("./pages/MyRecordings"));
+const PrivateCallLive = lazy(() => import("./pages/PrivateCallLive"));
+const VideoPrototypes = lazy(() => import("./pages/VideoPrototypes"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Gallery = lazy(() => import("./pages/Gallery"));
@@ -66,6 +69,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <ScrollToHashHandler />
+            <IncomingCallWidget />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -94,6 +98,8 @@ const App = () => (
                 <Route path="/pitch-rooms/:id" element={<ProtectedRoute><PitchRoomLive /></ProtectedRoute>} />
                 <Route path="/pitch-rooms/:id/replay" element={<ProtectedRoute><PitchRoomReplay /></ProtectedRoute>} />
                 <Route path="/pitch-rooms/recordings" element={<ProtectedRoute><MyRecordings /></ProtectedRoute>} />
+                <Route path="/private-call/:id" element={<ProtectedRoute><PrivateCallLive /></ProtectedRoute>} />
+                <Route path="/pitch-videos" element={<ProtectedRoute><VideoPrototypes /></ProtectedRoute>} />
                 <Route path="/jobs" element={<Jobs />} />
                 <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
