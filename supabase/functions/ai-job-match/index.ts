@@ -6,6 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const GEMINI_MODEL = "gemini-3.6-flash";
+const geminiUrl = (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+
 interface TalentProfile {
   user_id: string;
   title: string | null;
@@ -63,8 +66,8 @@ serve(async (req) => {
     const { job_id } = await req.json();
     if (!job_id) throw new Error("job_id is required");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -140,76 +143,67 @@ Pour chaque talent compatible, évalue sur 100 les critères suivants :
 
 Tu dois retourner UNIQUEMENT les 10 meilleurs candidats maximum, triés par score total décroissant.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(geminiUrl(GEMINI_API_KEY), {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `POSTE:\n${jobDescription}\n\nTALENTS DISPONIBLES:\n${talentSummaries}` },
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [
+          { role: "user", parts: [{ text: `POSTE:\n${jobDescription}\n\nTALENTS DISPONIBLES:\n${talentSummaries}` }] },
         ],
         tools: [
           {
-            type: "function",
-            function: {
-              name: "rank_talents",
-              description: "Rank the best matching talents for the job",
-              parameters: {
-                type: "object",
-                properties: {
-                  matches: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        user_id: { type: "string" },
-                        total_score: { type: "number" },
-                        competences_match: { type: "number" },
-                        experience_fit: { type: "number" },
-                        culture_fit: { type: "number" },
-                        growth_potential: { type: "number" },
-                        reasoning: { type: "string" },
+            function_declarations: [
+              {
+                name: "rank_talents",
+                description: "Rank the best matching talents for the job",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    matches: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          user_id: { type: "string" },
+                          total_score: { type: "number" },
+                          competences_match: { type: "number" },
+                          experience_fit: { type: "number" },
+                          culture_fit: { type: "number" },
+                          growth_potential: { type: "number" },
+                          reasoning: { type: "string" },
+                        },
+                        required: ["user_id", "total_score", "competences_match", "experience_fit", "culture_fit", "growth_potential", "reasoning"],
                       },
-                      required: ["user_id", "total_score", "competences_match", "experience_fit", "culture_fit", "growth_potential", "reasoning"],
-                      additionalProperties: false,
                     },
                   },
+                  required: ["matches"],
                 },
-                required: ["matches"],
-                additionalProperties: false,
               },
-            },
+            ],
           },
         ],
-        tool_choice: { type: "function", function: { name: "rank_talents" } },
+        tool_config: { function_calling_config: { mode: "ANY", allowed_function_names: ["rank_talents"] } },
+        generationConfig: { maxOutputTokens: 4096 },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI error:", response.status, errText);
+      console.error("Gemini API error:", response.status, errText);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Trop de requêtes, réessayez dans un moment." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Crédits IA insuffisants." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error("AI gateway error");
+      throw new Error("Gemini API error");
     }
 
     const aiData = await response.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No AI response");
+    const functionCallPart = aiData.candidates?.[0]?.content?.parts?.find((p: { functionCall?: unknown }) => p.functionCall);
+    if (!functionCallPart) throw new Error("No AI response");
 
-    const result = JSON.parse(toolCall.function.arguments);
+    const result = functionCallPart.functionCall.args;
     const matches: AiMatchResult[] = result.matches || [];
 
     // Store recommendations in DB

@@ -5,7 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_MODEL = "gemini-3.6-flash";
+const geminiUrl = (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
 
 interface BasicProfile {
   user_id: string;
@@ -46,8 +47,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -205,38 +206,30 @@ ${currentUserSummary}
 ## CANDIDATS POTENTIELS
 ${candidateSummaries}`;
 
-    const aiResponse = await fetch(AI_GATEWAY, {
+    const aiResponse = await fetch(geminiUrl(GEMINI_API_KEY), {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { maxOutputTokens: 4096 },
       }),
     });
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
+      const errText = await aiResponse.text();
+      console.error('Gemini API error:', status, errText);
       if (status === 429) {
         return new Response(JSON.stringify({ error: 'Trop de requêtes, réessayez dans quelques instants.' }), {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (status === 402) {
-        return new Response(JSON.stringify({ error: 'Crédits IA insuffisants.' }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      throw new Error(`AI gateway error: ${status}`);
+      throw new Error(`Gemini API error: ${status}`);
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || '[]';
+    const content = aiData.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || '').join('') || '[]';
 
     // Parse AI response - clean potential markdown wrapping
     let scores: AiScore[];

@@ -13,10 +13,11 @@ import PitchRoomPreJoin from "@/components/pitch-rooms/PitchRoomPreJoin";
 import PitchRoomInvite from "@/components/pitch-rooms/PitchRoomInvite";
 import AnnotationOverlay from "@/components/pitch-rooms/AnnotationOverlay";
 import PitchRoomQA from "@/components/pitch-rooms/PitchRoomQA";
+import PitchRoomHandRaise from "@/components/pitch-rooms/PitchRoomHandRaise";
 import type { PitchRoom, PitchRoomParticipant } from "@/types/pitch-room";
 import { ArrowLeft, Users, MessageSquare, X, UserPlus, Hand, LayoutGrid, Lock, Unlock, MicOff, HelpCircle, Circle, Square, Video } from "lucide-react";
 
-type SidebarTab = "chat" | "participants" | "qa" | null;
+type SidebarTab = "chat" | "participants" | "qa" | "hands" | null;
 
 const PitchRoomLive = () => {
   const { id } = useParams<{ id: string }>();
@@ -247,10 +248,12 @@ const PitchRoomLive = () => {
               {waitingCount} en attente
             </Badge>
           )}
-          {handRaisedCount > 0 && isCreator && (
-            <Badge className="bg-amber-500/10 text-amber-400 text-xs mr-1">
-              <Hand className="h-3 w-3 mr-1" /> {handRaisedCount}
-            </Badge>
+          {handRaisedCount > 0 && isPrivileged && (
+            <button onClick={() => setSidebarTab("hands")}>
+              <Badge className="bg-amber-500/10 text-amber-400 text-xs mr-1 cursor-pointer hover:bg-amber-500/20 transition-colors">
+                <Hand className="h-3 w-3 mr-1" /> {handRaisedCount}
+              </Badge>
+            </button>
           )}
 
           <Button
@@ -354,6 +357,12 @@ const PitchRoomLive = () => {
               >
                 <HelpCircle className="h-3.5 w-3.5 inline mr-1" /> Q&amp;A
               </button>
+              <button
+                onClick={() => setSidebarTab("hands")}
+                className={`flex-1 px-3 py-2.5 text-xs font-medium transition-colors ${sidebarTab === "hands" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Hand className="h-3.5 w-3.5 inline mr-1" /> Mains {handRaisedCount > 0 && `(${handRaisedCount})`}
+              </button>
               <button onClick={() => setSidebarTab(null)} className="px-2 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
@@ -364,6 +373,9 @@ const PitchRoomLive = () => {
                 <PitchRoomParticipants roomId={room.id} participants={participants} isCreator={isCreator} />
               )}
               {sidebarTab === "qa" && <PitchRoomQA roomId={room.id} canModerate={isPrivileged} />}
+              {sidebarTab === "hands" && (
+                <PitchRoomHandRaise roomId={room.id} participants={participants} isPrivileged={isPrivileged} currentUserId={user?.id} />
+              )}
             </div>
           </div>
         )}

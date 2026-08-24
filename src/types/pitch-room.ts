@@ -85,6 +85,7 @@ export interface PitchRoomParticipant {
   can_publish_audio: boolean;
   can_publish_video: boolean;
   hand_raised: boolean;
+  hand_raised_at: string | null;
   joined_at: string | null;
   left_at: string | null;
   created_at: string;

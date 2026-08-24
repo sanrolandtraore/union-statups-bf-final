@@ -243,7 +243,7 @@ serve(async (req) => {
     if (action === "hand_raise") {
       const { raised } = body;
       await adminSupabase.from("pitch_room_participants")
-        .update({ hand_raised: !!raised })
+        .update({ hand_raised: !!raised, hand_raised_at: raised ? new Date().toISOString() : null })
         .eq("room_id", roomId).eq("user_id", userId);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -304,11 +304,13 @@ serve(async (req) => {
       } else if (moderationAction === "ban") {
         await adminSupabase.from("pitch_room_participants").update({ status: "banned", left_at: new Date().toISOString() }).eq("room_id", roomId).eq("user_id", targetUserId);
       } else if (moderationAction === "promote_speaker") {
-        await adminSupabase.from("pitch_room_participants").update({ role: "speaker", can_publish_audio: true, can_publish_video: true, hand_raised: false }).eq("room_id", roomId).eq("user_id", targetUserId);
+        await adminSupabase.from("pitch_room_participants").update({ role: "speaker", can_publish_audio: true, can_publish_video: true, hand_raised: false, hand_raised_at: null }).eq("room_id", roomId).eq("user_id", targetUserId);
       } else if (moderationAction === "promote_cohost" && isCreator) {
         await adminSupabase.from("pitch_room_participants").update({ role: "moderator", can_publish_audio: true, can_publish_video: true }).eq("room_id", roomId).eq("user_id", targetUserId);
       } else if (moderationAction === "demote_viewer") {
         await adminSupabase.from("pitch_room_participants").update({ role: "viewer", can_publish_audio: false, can_publish_video: false }).eq("room_id", roomId).eq("user_id", targetUserId);
+      } else if (moderationAction === "lower_hand") {
+        await adminSupabase.from("pitch_room_participants").update({ hand_raised: false, hand_raised_at: null }).eq("room_id", roomId).eq("user_id", targetUserId);
       }
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

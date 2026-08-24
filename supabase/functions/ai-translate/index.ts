@@ -5,6 +5,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const GEMINI_MODEL = "gemini-3.5-flash-lite";
+const geminiUrl = (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -31,50 +34,44 @@ serve(async (req) => {
     }
 
     const { text, targetLang, context } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     const langName = targetLang === "en" ? "English" : "French";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(geminiUrl(GEMINI_API_KEY), {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional translator for a startup ecosystem platform called Union'S. Translate the following text to ${langName}. Keep proper nouns, brand names, and technical terms as-is. Maintain the original tone and formatting. Context: ${context || "general platform content"}. Return ONLY the translated text, nothing else.`,
-          },
-          { role: "user", content: text },
-        ],
+        system_instruction: {
+          parts: [{ text: `You are a professional translator for a startup ecosystem platform called Union'S. Translate the following text to ${langName}. Keep proper nouns, brand names, and technical terms as-is. Maintain the original tone and formatting. Context: ${context || "general platform content"}. Return ONLY the translated text, nothing else.` }],
+        },
+        contents: [{ role: "user", parts: [{ text }] }],
+        generationConfig: { maxOutputTokens: 2048 },
       }),
     });
 
     if (!response.ok) {
+      const t = await response.text();
+      console.error("Gemini API error:", response.status, t);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited" }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI error:", response.status, t);
       throw new Error("Translation failed");
     }
 
     const data = await response.json();
-    const translated = data.choices?.[0]?.message?.content || text;
+    const translated = data.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || '').join('') || text;
 
     return new Response(JSON.stringify({ translated }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("translate error:", e);
-    return new Response(JSON.stringify({ error: e.message, translated: null }), {
+    return new Response(JSON.stringify({ error: (e as Error).message, translated: null }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

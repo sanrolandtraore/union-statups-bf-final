@@ -1695,6 +1695,8 @@ export type Database = {
           can_publish_audio: boolean
           can_publish_video: boolean
           created_at: string
+          hand_raised: boolean
+          hand_raised_at: string | null
           id: string
           joined_at: string | null
           left_at: string | null
@@ -1707,6 +1709,8 @@ export type Database = {
           can_publish_audio?: boolean
           can_publish_video?: boolean
           created_at?: string
+          hand_raised?: boolean
+          hand_raised_at?: string | null
           id?: string
           joined_at?: string | null
           left_at?: string | null
@@ -1719,6 +1723,8 @@ export type Database = {
           can_publish_audio?: boolean
           can_publish_video?: boolean
           created_at?: string
+          hand_raised?: boolean
+          hand_raised_at?: string | null
           id?: string
           joined_at?: string | null
           left_at?: string | null
