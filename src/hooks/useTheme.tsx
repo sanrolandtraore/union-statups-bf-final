@@ -13,6 +13,16 @@ const ThemeContext = createContext<ThemeContextType | null>(null);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
+      // Migration unique : les visiteurs ayant chargé le site avant le
+      // passage au thème clair par défaut ont "dark" en cache dans leur
+      // navigateur. On réinitialise une seule fois vers "light", sans
+      // empêcher un choix explicite futur de repasser en sombre.
+      const migrated = localStorage.getItem("theme-migrated-v2");
+      if (!migrated) {
+        localStorage.removeItem("theme");
+        localStorage.setItem("theme-migrated-v2", "1");
+        return "light";
+      }
       return (localStorage.getItem("theme") as Theme) || "light";
     }
     return "light";
