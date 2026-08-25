@@ -17,6 +17,7 @@ const AdminTab = lazy(() => import("@/components/dashboard/AdminTab"));
 const BoostTab = lazy(() => import("@/components/dashboard/BoostTab"));
 const FundraisingTab = lazy(() => import("@/components/dashboard/FundraisingTab"));
 const InvestmentClubTab = lazy(() => import("@/components/dashboard/InvestmentClubTab"));
+const InvestorAIMatchTab = lazy(() => import("@/components/dashboard/InvestorAIMatchTab"));
 const IncubationTab = lazy(() => import("@/components/incubation/IncubationTab"));
 
 const TabLoading = () => (
@@ -58,6 +59,7 @@ const Dashboard = () => {
           {activeTab === "settings" && <SettingsTab />}
           {activeTab === "admin" && role === "admin" && <AdminTab />}
           {activeTab === "investment-club" && <InvestmentClubTab />}
+          {activeTab === "ai-match" && <InvestorAIMatchTab />}
           {activeTab === "incubation" && (role === "startup" || role === "admin") && <IncubationTab />}
         </Suspense>
         <AIAssistant />

@@ -6,7 +6,7 @@ import {
   LogOut, UserCircle, Target, Globe2, MessageSquareMore, Settings,
   Layers, ShieldHalf, Megaphone, Handshake, Briefcase, Video,
   BarChart3, UsersRound, TrendingUp, Home,
-  Rocket, Search, FolderOpen, LayoutDashboard, GraduationCap
+  Rocket, Search, FolderOpen, LayoutDashboard, GraduationCap, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -98,6 +98,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
       items: [
         { id: "investment-club", label: "Club d'Investissement", icon: BarChart3 },
         ...(role === "investor" ? [{ id: "fundraising" as DashboardTab, label: t("dashboard.fundraising"), icon: TrendingUp }] : []),
+        ...(role === "investor" ? [{ id: "ai-match" as DashboardTab, label: "Matching IA", icon: Sparkles }] : []),
       ],
     });
   }

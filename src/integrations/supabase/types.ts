@@ -1446,6 +1446,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mentor_profiles: {
+        Row: {
+          availability: string | null
+          bio: string | null
+          company_name: string | null
+          created_at: string
+          experience_years: number | null
+          id: string
+          specialty: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          specialty?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          specialty?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mentors: {
         Row: {
           achievements: string | null
@@ -3289,7 +3325,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "talent" | "startup" | "investor" | "partner" | "admin"
+      app_role: "talent" | "startup" | "investor" | "partner" | "admin" | "mentor"
       job_type: "emploi" | "mission" | "stage" | "cofounder" | "advisory"
     }
     CompositeTypes: {
@@ -3418,7 +3454,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["talent", "startup", "investor", "partner", "admin"],
+      app_role: ["talent", "startup", "investor", "partner", "admin", "mentor"],
       job_type: ["emploi", "mission", "stage", "cofounder", "advisory"],
     },
   },

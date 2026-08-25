@@ -12,7 +12,7 @@ import { AtSign, KeyRound, UserCircle, ArrowLeft, Eye, EyeOff, MailCheck } from 
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import logoIcon from "@/assets/brand/icon.png";
 
-type AppRole = "talent" | "startup" | "investor" | "partner";
+type AppRole = "talent" | "startup" | "investor" | "partner" | "mentor";
 
 const getAuthRedirectUrl = () => `${window.location.origin}/auth/callback`;
 
@@ -61,6 +61,7 @@ const Auth = () => {
     { value: "startup", label: t("auth.roleStartup"), description: t("auth.roleStartupDesc") },
     { value: "investor", label: t("auth.roleInvestor"), description: t("auth.roleInvestorDesc") },
     { value: "partner", label: t("auth.rolePartner"), description: t("auth.rolePartnerDesc") },
+    { value: "mentor", label: t("auth.roleMentor", "Mentor"), description: t("auth.roleMentorDesc", "Accompagner les fondateurs avec votre expertise") },
   ];
 
   useEffect(() => {
