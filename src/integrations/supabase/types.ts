@@ -2320,6 +2320,68 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_agreements: {
+        Row: {
+          campaign_id: string | null
+          company_legal_name: string
+          created_at: string
+          discount_rate: number | null
+          governing_law: string
+          has_mfn: boolean
+          id: string
+          investor_name: string
+          investor_user_id: string | null
+          purchase_amount: number
+          startup_user_id: string
+          status: string
+          storage_path: string | null
+          updated_at: string
+          valuation_cap: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          company_legal_name: string
+          created_at?: string
+          discount_rate?: number | null
+          governing_law?: string
+          has_mfn?: boolean
+          id?: string
+          investor_name: string
+          investor_user_id?: string | null
+          purchase_amount: number
+          startup_user_id: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          valuation_cap?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          company_legal_name?: string
+          created_at?: string
+          discount_rate?: number | null
+          governing_law?: string
+          has_mfn?: boolean
+          id?: string
+          investor_name?: string
+          investor_user_id?: string | null
+          purchase_amount?: number
+          startup_user_id?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          valuation_cap?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safe_agreements_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "fundraising_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       startup_kyc_submissions: {
         Row: {
           company_legal_name: string

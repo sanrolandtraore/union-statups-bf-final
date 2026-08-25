@@ -47,12 +47,18 @@ const ProfileUploads = ({ role }: { role: string | null }) => {
     if (invalid) return toast.error(`${invalid.name} dépasse la limite de 20 Mo.`);
     setUploading(true);
     try {
-      for (const file of files) {
+      const results = await Promise.allSettled(files.map((file) => {
         const path = `${user.id}/${crypto.randomUUID()}-${safeName(file.name)}`;
-        const { error } = await supabase.storage.from("profile-files").upload(path, file, { upsert: false, contentType: file.type || "application/octet-stream", cacheControl: "3600" });
-        if (error) throw error;
+        return supabase.storage.from("profile-files").upload(path, file, { upsert: false, contentType: file.type || "application/octet-stream", cacheControl: "3600" });
+      }));
+      const failed = results.filter((r) => r.status === "rejected" || (r.status === "fulfilled" && r.value.error));
+      if (failed.length > 0 && failed.length === files.length) {
+        throw new Error("Le téléversement a échoué.");
       }
-      toast.success(files.length > 1 ? `${files.length} documents téléversés.` : "Document téléversé.");
+      if (failed.length > 0) {
+        toast.error(`${failed.length} fichier(s) sur ${files.length} n'a/n'ont pas pu être téléversé(s).`);
+      }
+      toast.success(files.length > 1 ? `${files.length - failed.length} document(s) téléversé(s).` : "Document téléversé.");
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Le téléversement a échoué.");

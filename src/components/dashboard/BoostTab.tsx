@@ -41,11 +41,15 @@ const BoostTab = () => {
       supabase.from("projects").select("id, title").eq("user_id", user.id).eq("is_active", true),
     ]);
     const enriched: Boost[] = [];
+    const boostIds = (boostsData || []).map((b) => b.id);
+    const { data: allAnalytics } = boostIds.length
+      ? await supabase.from("boost_analytics").select("boost_id, event_type").in("boost_id", boostIds)
+      : { data: [] as { boost_id: string; event_type: string }[] };
     for (const b of (boostsData || [])) {
-      const { data: analytics } = await supabase.from("boost_analytics").select("event_type").eq("boost_id", b.id);
-      const views = (analytics || []).filter(a => a.event_type === "view").length;
-      const clicks = (analytics || []).filter(a => a.event_type === "click").length;
-      const contacts = (analytics || []).filter(a => a.event_type === "contact").length;
+      const analytics = (allAnalytics || []).filter((a) => a.boost_id === b.id);
+      const views = analytics.filter(a => a.event_type === "view").length;
+      const clicks = analytics.filter(a => a.event_type === "click").length;
+      const contacts = analytics.filter(a => a.event_type === "contact").length;
       enriched.push({ ...b, analytics: { views, clicks, contacts } });
     }
     setBoosts(enriched);

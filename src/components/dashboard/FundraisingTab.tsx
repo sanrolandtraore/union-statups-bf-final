@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,9 +17,10 @@ import { Progress } from "@/components/ui/progress";
 import {
   TrendingUp, Plus, Search, MapPin, Users,
   Building2, Target, Send, Loader2, Upload,
-  Edit, Trash2, MessageSquare, Clock, CheckCircle, XCircle, Rocket,
+  Edit, Trash2, MessageSquare, Clock, CheckCircle, XCircle, Rocket, FileText,
 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+const SafeGeneratorDialog = lazy(() => import("@/components/dashboard/SafeGeneratorDialog"));
 
 type FundraisingCampaign = Database["public"]["Tables"]["fundraising_campaigns"]["Row"];
 
@@ -35,6 +36,7 @@ const FundraisingTab = () => {
 
   const [activeView, setActiveView] = useState(isStartup ? "my-campaigns" : "browse");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showSafeGenerator, setShowSafeGenerator] = useState(false);
   const [showInterestDialog, setShowInterestDialog] = useState<string | null>(null);
   const [editingCampaign, setEditingCampaign] = useState<FundraisingCampaign | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -297,10 +299,16 @@ const FundraisingTab = () => {
           <p className="text-sm text-muted-foreground mt-1">{t("fundraising.subtitle")}</p>
         </div>
         {isStartup && (
-          <Button onClick={() => { resetForm(); setPitchDeckFile(null); setEditingCampaign(null); setShowCreateDialog(true); }} className="bg-gradient-gold text-primary-foreground">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("fundraising.createCampaign")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowSafeGenerator(true)}>
+              <FileText className="h-4 w-4 mr-2" />
+              Générer un SAFE
+            </Button>
+            <Button onClick={() => { resetForm(); setPitchDeckFile(null); setEditingCampaign(null); setShowCreateDialog(true); }} className="bg-gradient-gold text-primary-foreground">
+              <Plus className="h-4 w-4 mr-2" />
+              {t("fundraising.createCampaign")}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -780,6 +788,15 @@ const FundraisingTab = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {showSafeGenerator && (
+        <Suspense fallback={null}>
+          <SafeGeneratorDialog
+            defaultCompanyName={myCampaigns[0]?.company_name || ""}
+            onClose={() => setShowSafeGenerator(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

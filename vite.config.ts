@@ -29,6 +29,7 @@ export default defineConfig({
           "vendor-query": ["@tanstack/react-query"],
           "vendor-i18n": ["i18next", "react-i18next", "i18next-browser-languagedetector"],
           "vendor-motion": ["framer-motion"],
+          "vendor-livekit": ["livekit-client", "@livekit/components-react", "@livekit/components-styles"],
           "vendor-radix": [
             "@radix-ui/react-accordion",
             "@radix-ui/react-avatar",
