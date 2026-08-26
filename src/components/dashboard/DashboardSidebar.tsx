@@ -6,7 +6,7 @@ import {
   LogOut, UserCircle, Target, Globe2, MessageSquareMore, Settings,
   Layers, ShieldHalf, Megaphone, Handshake, Briefcase, Video,
   BarChart3, UsersRound, TrendingUp, Home,
-  Rocket, Search, FolderOpen, LayoutDashboard, GraduationCap, Sparkles
+  Rocket, Search, FolderOpen, LayoutDashboard, GraduationCap, Sparkles, Scale
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -85,6 +85,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
         { id: "projects", label: t("dashboard.projects"), icon: Layers },
         { id: "incubation", label: "Incubateur digital", icon: GraduationCap },
         { id: "fundraising", label: t("dashboard.fundraising"), icon: TrendingUp },
+        { id: "legal-docs", label: "Documents juridiques", icon: Scale },
       ],
     });
   }
@@ -99,6 +100,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
         { id: "investment-club", label: "Club d'Investissement", icon: BarChart3 },
         ...(role === "investor" ? [{ id: "fundraising" as DashboardTab, label: t("dashboard.fundraising"), icon: TrendingUp }] : []),
         ...(role === "investor" ? [{ id: "ai-match" as DashboardTab, label: "Matching IA", icon: Sparkles }] : []),
+        ...(role === "investor" ? [{ id: "legal-docs" as DashboardTab, label: "Documents juridiques", icon: Scale }] : []),
       ],
     });
   }

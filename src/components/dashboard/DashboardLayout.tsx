@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 
-export type DashboardTab = "home" | "profile" | "matching" | "cofounder" | "explorer" | "projects" | "contacts" | "boost" | "settings" | "admin" | "fundraising" | "investment-club" | "incubation" | "ai-match";
+export type DashboardTab = "home" | "profile" | "matching" | "cofounder" | "explorer" | "projects" | "contacts" | "boost" | "settings" | "admin" | "fundraising" | "investment-club" | "incubation" | "ai-match" | "legal-docs";
 
 interface DashboardLayoutProps {
   activeTab: DashboardTab;

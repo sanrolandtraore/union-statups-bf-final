@@ -1413,6 +1413,39 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_documents: {
+        Row: {
+          created_at: string
+          creator_user_id: string
+          document_type: string
+          id: string
+          params: Json
+          party_a_name: string
+          party_b_name: string
+          storage_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          creator_user_id: string
+          document_type: string
+          id?: string
+          params?: Json
+          party_a_name: string
+          party_b_name: string
+          storage_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          creator_user_id?: string
+          document_type?: string
+          id?: string
+          params?: Json
+          party_a_name?: string
+          party_b_name?: string
+          storage_path?: string | null
+        }
+        Relationships: []
+      }
       legal_pages: {
         Row: {
           content: string
