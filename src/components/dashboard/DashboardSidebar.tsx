@@ -86,6 +86,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
         { id: "incubation", label: "Incubateur digital", icon: GraduationCap },
         { id: "fundraising", label: t("dashboard.fundraising"), icon: TrendingUp },
         { id: "legal-docs", label: "Documents juridiques", icon: Scale },
+        { id: "pitch-coach", label: "Pitch Coach IA", icon: Sparkles },
       ],
     });
   }

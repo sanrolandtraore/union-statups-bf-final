@@ -1962,6 +1962,66 @@ export type Database = {
         }
         Relationships: []
       }
+      pitch_audits: {
+        Row: {
+          ask_clarity: number
+          business_model: number
+          created_at: string
+          id: string
+          market_size: number
+          overall_score: number
+          problem_clarity: number
+          recommendations: string[]
+          source_filename: string
+          storage_path: string | null
+          storytelling: number
+          strengths: string[]
+          summary: string | null
+          team_strength: number
+          traction: number
+          user_id: string
+          weaknesses: string[]
+        }
+        Insert: {
+          ask_clarity: number
+          business_model: number
+          created_at?: string
+          id?: string
+          market_size: number
+          overall_score: number
+          problem_clarity: number
+          recommendations?: string[]
+          source_filename: string
+          storage_path?: string | null
+          storytelling: number
+          strengths?: string[]
+          summary?: string | null
+          team_strength: number
+          traction: number
+          user_id: string
+          weaknesses?: string[]
+        }
+        Update: {
+          ask_clarity?: number
+          business_model?: number
+          created_at?: string
+          id?: string
+          market_size?: number
+          overall_score?: number
+          problem_clarity?: number
+          recommendations?: string[]
+          source_filename?: string
+          storage_path?: string | null
+          storytelling?: number
+          strengths?: string[]
+          summary?: string | null
+          team_strength?: number
+          traction?: number
+          user_id?: string
+          weaknesses?: string[]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

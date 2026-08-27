@@ -19,6 +19,7 @@ const FundraisingTab = lazy(() => import("@/components/dashboard/FundraisingTab"
 const InvestmentClubTab = lazy(() => import("@/components/dashboard/InvestmentClubTab"));
 const InvestorAIMatchTab = lazy(() => import("@/components/dashboard/InvestorAIMatchTab"));
 const LegalDocsTab = lazy(() => import("@/components/dashboard/LegalDocsTab"));
+const PitchCoachTab = lazy(() => import("@/components/dashboard/PitchCoachTab"));
 const IncubationTab = lazy(() => import("@/components/incubation/IncubationTab"));
 
 const TabLoading = () => (
@@ -62,6 +63,7 @@ const Dashboard = () => {
           {activeTab === "investment-club" && <InvestmentClubTab />}
           {activeTab === "ai-match" && <InvestorAIMatchTab />}
           {activeTab === "legal-docs" && <LegalDocsTab />}
+          {activeTab === "pitch-coach" && <PitchCoachTab />}
           {activeTab === "incubation" && (role === "startup" || role === "admin") && <IncubationTab />}
         </Suspense>
         <AIAssistant />
