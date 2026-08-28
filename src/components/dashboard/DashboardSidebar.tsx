@@ -102,6 +102,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
         { id: "investment-club", label: "Club d'Investissement", icon: BarChart3 },
         ...(role === "investor" ? [{ id: "fundraising" as DashboardTab, label: t("dashboard.fundraising"), icon: TrendingUp }] : []),
         ...(role === "investor" ? [{ id: "ai-match" as DashboardTab, label: "Matching IA", icon: Sparkles }] : []),
+        ...(role === "investor" ? [{ id: "due-diligence" as DashboardTab, label: "Due Diligence IA", icon: ShieldHalf }] : []),
         ...(role === "investor" ? [{ id: "legal-docs" as DashboardTab, label: "Documents juridiques", icon: Scale }] : []),
       ],
     });

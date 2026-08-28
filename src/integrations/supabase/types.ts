@@ -604,6 +604,74 @@ export type Database = {
           },
         ]
       }
+      due_diligence_reports: {
+        Row: {
+          campaign_id: string | null
+          compliance_checklist: Json
+          compliance_score: number
+          created_at: string
+          finance_score: number
+          financial_analysis: string
+          id: string
+          investor_user_id: string
+          market_analysis: string
+          market_score: number
+          overall_score: number
+          recommendations: string[]
+          risk_flags: string[]
+          risk_score: number
+          startup_name: string
+          team_analysis: string
+          team_score: number
+        }
+        Insert: {
+          campaign_id?: string | null
+          compliance_checklist?: Json
+          compliance_score: number
+          created_at?: string
+          finance_score: number
+          financial_analysis: string
+          id?: string
+          investor_user_id: string
+          market_analysis: string
+          market_score: number
+          overall_score: number
+          recommendations?: string[]
+          risk_flags?: string[]
+          risk_score: number
+          startup_name: string
+          team_analysis: string
+          team_score: number
+        }
+        Update: {
+          campaign_id?: string | null
+          compliance_checklist?: Json
+          compliance_score?: number
+          created_at?: string
+          finance_score?: number
+          financial_analysis?: string
+          id?: string
+          investor_user_id?: string
+          market_analysis?: string
+          market_score?: number
+          overall_score?: number
+          recommendations?: string[]
+          risk_flags?: string[]
+          risk_score?: number
+          startup_name?: string
+          team_analysis?: string
+          team_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "due_diligence_reports_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "fundraising_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faq_items: {
         Row: {
           answer: string
