@@ -33,6 +33,7 @@ const PitchRoomReplay = lazy(() => import("./pages/PitchRoomReplay"));
 const MyRecordings = lazy(() => import("./pages/MyRecordings"));
 const PrivateCallLive = lazy(() => import("./pages/PrivateCallLive"));
 const VideoPrototypes = lazy(() => import("./pages/VideoPrototypes"));
+const BuyCredits = lazy(() => import("./pages/BuyCredits"));
 const Jobs = lazy(() => import("./pages/Jobs"));
 const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Gallery = lazy(() => import("./pages/Gallery"));
@@ -100,6 +101,7 @@ const App = () => (
                 <Route path="/pitch-rooms/recordings" element={<ProtectedRoute><MyRecordings /></ProtectedRoute>} />
                 <Route path="/private-call/:id" element={<ProtectedRoute><PrivateCallLive /></ProtectedRoute>} />
                 <Route path="/pitch-videos" element={<ProtectedRoute><VideoPrototypes /></ProtectedRoute>} />
+                <Route path="/credits/buy" element={<ProtectedRoute><BuyCredits /></ProtectedRoute>} />
                 <Route path="/jobs" element={<Jobs />} />
                 <Route path="/jobs/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />

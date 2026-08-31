@@ -52,6 +52,36 @@ export type Database = {
           },
         ]
       }
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_user_id: string
+          created_at: string
+          details: Json
+          id: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -391,6 +421,232 @@ export type Database = {
           sender_id?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      contact_unlocks: {
+        Row: {
+          buyer_user_id: string
+          credits_spent: number
+          id: string
+          profile_id: string | null
+          target_user_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          buyer_user_id: string
+          credits_spent: number
+          id?: string
+          profile_id?: string | null
+          target_user_id: string
+          unlocked_at?: string
+        }
+        Update: {
+          buyer_user_id?: string
+          credits_spent?: number
+          id?: string
+          profile_id?: string | null
+          target_user_id?: string
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
+      credit_packages: {
+        Row: {
+          created_at: string
+          credits: number
+          id: string
+          is_active: boolean
+          name: string
+          price_fcfa: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          id?: string
+          is_active?: boolean
+          name: string
+          price_fcfa: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_fcfa?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          package_id: string | null
+          payment_url: string | null
+          provider: string
+          provider_reference: string | null
+          raw_webhook_payload: Json | null
+          status: string
+          transaction_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          package_id?: string | null
+          payment_url?: string | null
+          provider?: string
+          provider_reference?: string | null
+          raw_webhook_payload?: Json | null
+          status?: string
+          transaction_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          package_id?: string | null
+          payment_url?: string | null
+          provider?: string
+          provider_reference?: string | null
+          raw_webhook_payload?: Json | null
+          status?: string
+          transaction_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_payment_transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "credit_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_transactions: {
+        Row: {
+          action_key: string | null
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          id: string
+          metadata: Json
+          reference_id: string | null
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          action_key?: string | null
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reference_id?: string | null
+          type: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          action_key?: string | null
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reference_id?: string | null
+          type?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "credit_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_usage_rules: {
+        Row: {
+          action_key: string
+          cost: number
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          cost: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          cost?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_wallets: {
+        Row: {
+          created_at: string
+          free_balance: number
+          id: string
+          next_reset: string | null
+          paid_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          free_balance?: number
+          id?: string
+          next_reset?: string | null
+          paid_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          free_balance?: number
+          id?: string
+          next_reset?: string | null
+          paid_balance?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1643,6 +1899,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          metadata: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          metadata?: Json
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       partner_profiles: {
         Row: {
           company_name: string | null
@@ -2090,6 +2379,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_contacts: {
+        Row: {
+          allow_contact: boolean
+          email: string | null
+          hide_email: boolean
+          hide_phone: boolean
+          phone: string | null
+          updated_at: string
+          user_id: string
+          verified_only: boolean
+        }
+        Insert: {
+          allow_contact?: boolean
+          email?: string | null
+          hide_email?: boolean
+          hide_phone?: boolean
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+          verified_only?: boolean
+        }
+        Update: {
+          allow_contact?: boolean
+          email?: string | null
+          hide_email?: boolean
+          hide_phone?: boolean
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+          verified_only?: boolean
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2348,6 +2670,24 @@ export type Database = {
           bucket_key?: string
           created_at?: string
           id?: number
+        }
+        Relationships: []
+      }
+      role_credit_quotas: {
+        Row: {
+          initial_credits: number
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          initial_credits?: number
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          initial_credits?: number
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3361,6 +3701,10 @@ export type Database = {
           verified_profiles: number
         }[]
       }
+      get_protected_contact: {
+        Args: { p_target_user_id: string }
+        Returns: { email: string; is_unlocked: boolean; phone: string }[]
+      }
       get_public_profile: {
         Args: { p_user_id: string }
         Returns: {
@@ -3375,6 +3719,10 @@ export type Database = {
           user_id: string
           website: string
         }[]
+      }
+      grant_credits: {
+        Args: { p_amount: number; p_metadata?: Json; p_type: string; p_user_id: string }
+        Returns: Json
       }
       has_role: {
         Args: {
@@ -3461,6 +3809,10 @@ export type Database = {
           visibility: string
         }[]
       }
+      spend_credits: {
+        Args: { p_action_key: string; p_metadata?: Json; p_reference_id?: string; p_target_user_id?: string }
+        Returns: Json
+      }
       search_talents: {
         Args: {
           p_city?: string
@@ -3486,7 +3838,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "talent" | "startup" | "investor" | "partner" | "admin" | "mentor"
+      app_role: "talent" | "startup" | "investor" | "partner" | "admin" | "mentor" | "accelerator"
       job_type: "emploi" | "mission" | "stage" | "cofounder" | "advisory"
     }
     CompositeTypes: {
@@ -3615,7 +3967,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["talent", "startup", "investor", "partner", "admin", "mentor"],
+      app_role: ["talent", "startup", "investor", "partner", "admin", "mentor", "accelerator"],
       job_type: ["emploi", "mission", "stage", "cofounder", "advisory"],
     },
   },

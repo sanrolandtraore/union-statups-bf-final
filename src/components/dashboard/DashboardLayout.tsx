@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
+import WalletWidget from "@/components/wallet/WalletWidget";
 
 export type DashboardTab = "home" | "profile" | "matching" | "cofounder" | "explorer" | "projects" | "contacts" | "boost" | "settings" | "admin" | "fundraising" | "investment-club" | "incubation" | "ai-match" | "legal-docs" | "pitch-coach" | "fundraising-advisor" | "due-diligence";
 
@@ -37,13 +38,16 @@ const DashboardLayout = ({ activeTab, onTabChange, children }: DashboardLayoutPr
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center gap-4 border-b border-border px-6 py-4 md:hidden">
-          <button onClick={() => setSidebarOpen(true)} className="text-foreground">
+        <header className="flex items-center gap-4 border-b border-border px-6 py-4">
+          <button onClick={() => setSidebarOpen(true)} className="text-foreground md:hidden">
             <Menu className="h-5 w-5" />
           </button>
-          <span className="font-display font-bold text-foreground">
+          <span className="font-display font-bold text-foreground md:hidden">
             Union<span className="text-gradient-gold">'S</span>
           </span>
+          <div className="ml-auto">
+            <WalletWidget />
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
