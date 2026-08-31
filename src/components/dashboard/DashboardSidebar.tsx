@@ -6,7 +6,7 @@ import {
   LogOut, UserCircle, Target, Globe2, MessageSquareMore, Settings,
   Layers, ShieldHalf, Megaphone, Handshake, Briefcase, Video,
   BarChart3, UsersRound, TrendingUp, Home,
-  Rocket, Search, FolderOpen, LayoutDashboard, GraduationCap, Sparkles, Scale
+  Rocket, Search, FolderOpen, LayoutDashboard, GraduationCap, Sparkles, Scale, Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -156,6 +156,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
       icon: ShieldHalf,
       items: [
         { id: "admin", label: t("dashboard.admin"), icon: ShieldHalf },
+        { id: "admin-credits", label: "Gestion des crédits", icon: Wallet },
       ],
     });
   }
