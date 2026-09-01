@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
-import { Bell, Camera, CheckCircle2, Eye, Globe, KeyRound, Loader2, LogOut, Shield, Trash2, User } from "lucide-react";
+import { Bell, Camera, CheckCircle2, Eye, Globe, KeyRound, Loader2, LogOut, Lock, Shield, Trash2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import KYCSection from "./KYCSection";
+import ProfileContactSettings from "./ProfileContactSettings";
 
 interface Preferences {
   notifEmail: boolean;
@@ -186,6 +187,8 @@ const SettingsTabProduction = () => {
       <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Eye className="h-5 w-5 text-primary" /> {t("settings.privacy.title")}</h2><div className="space-y-4">
         {([ ["profilePublic", t("settings.privacy.publicProfile.label"), t("settings.privacy.publicProfile.desc")], ["showEmail", t("settings.privacy.showEmail.label"), t("settings.privacy.showEmail.desc")] ] as const).map(([key, label, description]) => <div key={key} className="flex items-center justify-between"><div><p className="text-sm font-medium">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div><Switch checked={preferences[key]} onCheckedChange={(value) => void updatePreference(key, value)} /></div>)}
       </div></section>
+
+      <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Lock className="h-5 w-5 text-primary" /> Coordonnées protégées</h2><ProfileContactSettings /></section>
 
       <section className="rounded-xl border border-border bg-card p-6"><h2 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold"><Shield className="h-5 w-5 text-primary" /> {t("settings.security.title")}</h2><form onSubmit={handleChangePassword} className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div><Label>{t("settings.security.newPassword")}</Label><Input className="mt-2" type="password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required /></div><div><Label>{t("settings.security.confirmPassword")}</Label><Input className="mt-2" type="password" minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required /></div></div><Button type="submit" variant="outline" disabled={passwordLoading}>{passwordLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}{t("settings.security.changeBtn")}</Button></form></section>
 
