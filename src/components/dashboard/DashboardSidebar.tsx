@@ -88,6 +88,7 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
         { id: "legal-docs", label: "Documents juridiques", icon: Scale },
         { id: "pitch-coach", label: "Pitch Coach IA", icon: Sparkles },
         { id: "fundraising-advisor", label: "Levée de fonds", icon: TrendingUp },
+        { id: "recruitment", label: "Recrutement IA", icon: Briefcase },
       ],
     });
   }

@@ -650,6 +650,59 @@ export type Database = {
         }
         Relationships: []
       }
+      cv_analyses: {
+        Row: {
+          candidate_name: string | null
+          created_at: string
+          cv_filename: string
+          employer_user_id: string
+          gaps: string[]
+          id: string
+          job_id: string | null
+          overall_score: number
+          storage_path: string | null
+          strengths: string[]
+          suggested_questions: string[]
+          summary: string
+        }
+        Insert: {
+          candidate_name?: string | null
+          created_at?: string
+          cv_filename: string
+          employer_user_id: string
+          gaps?: string[]
+          id?: string
+          job_id?: string | null
+          overall_score: number
+          storage_path?: string | null
+          strengths?: string[]
+          suggested_questions?: string[]
+          summary: string
+        }
+        Update: {
+          candidate_name?: string | null
+          created_at?: string
+          cv_filename?: string
+          employer_user_id?: string
+          gaps?: string[]
+          id?: string
+          job_id?: string | null
+          overall_score?: number
+          storage_path?: string | null
+          strengths?: string[]
+          suggested_questions?: string[]
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_analyses_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_questions: {
         Row: {
           answer: string | null
