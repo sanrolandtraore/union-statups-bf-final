@@ -4,7 +4,7 @@ import { Menu } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import WalletWidget from "@/components/wallet/WalletWidget";
 
-export type DashboardTab = "home" | "profile" | "matching" | "cofounder" | "explorer" | "projects" | "contacts" | "boost" | "settings" | "admin" | "fundraising" | "investment-club" | "incubation" | "ai-match" | "legal-docs" | "pitch-coach" | "fundraising-advisor" | "due-diligence" | "admin-credits" | "recruitment";
+export type DashboardTab = "home" | "profile" | "matching" | "cofounder" | "explorer" | "projects" | "contacts" | "boost" | "settings" | "admin" | "fundraising" | "investment-club" | "incubation" | "ai-match" | "legal-docs" | "pitch-coach" | "fundraising-advisor" | "due-diligence" | "admin-credits" | "recruitment" | "my-learning";
 
 interface DashboardLayoutProps {
   activeTab: DashboardTab;

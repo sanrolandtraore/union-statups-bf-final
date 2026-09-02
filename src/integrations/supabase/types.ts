@@ -2522,6 +2522,85 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string
+          passed: boolean
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id: string
+          passed: boolean
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string
+          passed?: boolean
+          score?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "startup_school_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer_index: number
+          created_at: string
+          explanation: string | null
+          id: string
+          module_id: string
+          options: Json
+          question: string
+          sort_order: number
+        }
+        Insert: {
+          correct_answer_index: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          module_id: string
+          options: Json
+          question: string
+          sort_order?: number
+        }
+        Update: {
+          correct_answer_index?: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          module_id?: string
+          options?: Json
+          question?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "startup_school_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_enrollments: {
         Row: {
           completed_at: string | null
@@ -2743,6 +2822,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      certificates: {
+        Row: {
+          certificate_number: string
+          id: string
+          issued_at: string
+          program_id: string
+          user_id: string
+        }
+        Insert: {
+          certificate_number: string
+          id?: string
+          issued_at?: string
+          program_id: string
+          user_id: string
+        }
+        Update: {
+          certificate_number?: string
+          id?: string
+          issued_at?: string
+          program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "startup_school_programs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       resources: {
         Row: {
@@ -3758,6 +3869,10 @@ export type Database = {
         Args: { p_target_user_id: string }
         Returns: { email: string; is_unlocked: boolean; phone: string }[]
       }
+      get_quiz_questions: {
+        Args: { p_module_id: string }
+        Returns: { id: string; options: Json; question: string; sort_order: number }[]
+      }
       get_public_profile: {
         Args: { p_user_id: string }
         Returns: {
@@ -3775,6 +3890,10 @@ export type Database = {
       }
       grant_credits: {
         Args: { p_amount: number; p_metadata?: Json; p_type: string; p_user_id: string }
+        Returns: Json
+      }
+      issue_certificate: {
+        Args: { p_program_id: string }
         Returns: Json
       }
       has_role: {
@@ -3864,6 +3983,10 @@ export type Database = {
       }
       spend_credits: {
         Args: { p_action_key: string; p_metadata?: Json; p_reference_id?: string; p_target_user_id?: string }
+        Returns: Json
+      }
+      submit_quiz_attempt: {
+        Args: { p_answers: Json; p_module_id: string }
         Returns: Json
       }
       search_talents: {
