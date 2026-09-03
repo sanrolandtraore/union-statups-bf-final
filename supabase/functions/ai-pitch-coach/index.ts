@@ -45,6 +45,19 @@ serve(async (req) => {
       });
     }
 
+    // Déduction des crédits AVANT l'appel Gemini (coûteux) — la règle
+    // 'pitch_deck_analysis' est déjà configurée en base (credit_usage_rules).
+    // Appelée via le client authentifié (auth.uid() requis par spend_credits).
+    const { error: spendError } = await supabaseAuth.rpc("spend_credits", { p_action_key: "pitch_deck_analysis" });
+    if (spendError) {
+      const msg = spendError.message.includes("insufficient_credits")
+        ? "Crédits insuffisants pour cette analyse (20 crédits nécessaires)."
+        : spendError.message;
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const systemPrompt = `Tu es un expert en évaluation de pitch decks pour investisseurs early-stage en Afrique de l'Ouest. Analyse le pitch deck fourni (document PDF) et évalue-le de façon rigoureuse et constructive.
 
 Évalue chacun des 7 critères suivants sur ~14 points (total sur 100, arrondi) :

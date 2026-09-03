@@ -83,7 +83,19 @@ const PitchCoachTab = () => {
       const { data, error } = await supabase.functions.invoke("ai-pitch-coach", {
         body: { pdfBase64: base64, filename: file.name },
       });
-      if (error || data?.error) throw new Error(data?.error || (error as Error)?.message);
+      if (error || data?.error) {
+        // Le client Supabase renvoie un message générique sur les statuts
+        // non-2xx (ex: 402 crédits insuffisants) — on extrait le vrai
+        // message JSON renvoyé par la fonction edge quand disponible.
+        let message = data?.error;
+        if (!message && error && "context" in error) {
+          try {
+            const body = await (error as { context: Response }).context.json();
+            message = body?.error;
+          } catch { /* ignore, on retombe sur le message générique */ }
+        }
+        throw new Error(message || (error as Error)?.message || "Une erreur est survenue.");
+      }
       setSelected(data.audit);
       setAudits((prev) => [data.audit, ...prev]);
       toast({ title: "Analyse terminée", description: `Score global : ${data.audit.overall_score}/100` });
