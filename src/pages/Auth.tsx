@@ -162,19 +162,27 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-8">
+      {/* Image de fond premium avec overlay sombre pour la lisibilité */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url(https://images.unsplash.com/photo-1604328727766-a151d1045ab4?auto=format&fit=crop&w=2000&q=80)" }}
+        aria-hidden="true"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" aria-hidden="true" />
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex items-center justify-between">
           <a href="/" className="inline-flex items-center gap-2">
             <img src={logoIcon} alt="Union'S" className="h-10 w-10 object-contain" />
-            <span className="text-2xl font-display font-bold text-foreground">
+            <span className="text-2xl font-display font-bold text-white">
               Union<span className="text-gradient-gold">'S</span>
             </span>
           </a>
           <LanguageSwitcher />
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-8">
+        <div className="rounded-2xl border border-white/10 bg-card/95 backdrop-blur-xl p-8 shadow-2xl">
           {verificationPending ? (
             <div className="space-y-5 text-center">
               <MailCheck className="mx-auto h-12 w-12 text-primary" />

@@ -34,22 +34,27 @@ const DiscoveryHome = () => {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-border/60 bg-background pt-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,hsl(var(--primary)/0.14),transparent_32%),radial-gradient(circle_at_10%_80%,hsl(var(--primary)/0.07),transparent_28%)]" />
-        <div className="container relative mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
+      <section className="relative overflow-hidden border-b border-border/60 pt-24">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url(https://images.unsplash.com/photo-1655720357872-ce227e4164ba?auto=format&fit=crop&w=2400&q=80)" }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-background" aria-hidden="true" />
+        <div className="container relative mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:py-28">
           <div className="mx-auto max-w-5xl text-center">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
-              <h1 className="mt-6 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">L'écosystème de confiance pour les <span className="text-primary">projets, talents et investisseurs.</span></h1>
-              <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">Union'S est le Hub Digital qui structure l'écosystème entrepreneurial africain : découvrez, connectez-vous et collaborez dans un environnement sécurisé et vérifié.</p>
+              <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">L'écosystème de confiance pour les <span className="text-gradient-gold">projets, talents et investisseurs.</span></h1>
+              <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-white/85 sm:text-lg">Union'S est le Hub Digital qui structure l'écosystème entrepreneurial africain : découvrez, connectez-vous et collaborez dans un environnement sécurisé et vérifié.</p>
             </motion.div>
-            <motion.form onSubmit={submitSearch} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.55 }} className="mx-auto mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-border bg-card p-2 shadow-xl shadow-primary/5 sm:flex-row">
+            <motion.form onSubmit={submitSearch} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.55 }} className="mx-auto mt-8 flex max-w-3xl flex-col gap-3 rounded-2xl border border-white/20 bg-card/95 backdrop-blur-xl p-2 shadow-2xl sm:flex-row">
               <div className="relative flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher un talent, un projet, une opportunité..." className="h-12 border-0 bg-transparent pl-12 text-base shadow-none focus-visible:ring-0" aria-label="Recherche Union'S" /></div>
-              <Button type="submit" size="lg" className="h-12 px-7 font-semibold">Rechercher</Button>
+              <Button type="submit" size="lg" className="h-12 px-7 font-semibold bg-gradient-gold text-primary-foreground">Rechercher</Button>
             </motion.form>
             <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm">
-              {[['Talents','/talents'],['Projets','/projets'],['Emplois','/jobs'],['Investissement','/syndicates'],['Pitch Rooms','/pitch-rooms']].map(([label, href]) => <Link key={href} to={href} className="rounded-full border border-border bg-background px-3 py-1.5 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary">{label}</Link>)}
+              {[['Talents','/talents'],['Projets','/projets'],['Emplois','/jobs'],['Investissement','/syndicates'],['Pitch Rooms','/pitch-rooms']].map(([label, href]) => <Link key={href} to={href} className="rounded-full border border-white/25 bg-white/10 backdrop-blur-sm px-3 py-1.5 text-white/85 transition-colors hover:border-primary/60 hover:bg-white/20 hover:text-white">{label}</Link>)}
             </div>
-            <div className="mx-auto mt-10 grid max-w-2xl grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-card/70 py-5">
+            <div className="mx-auto mt-10 grid max-w-2xl grid-cols-3 divide-x divide-white/15 rounded-2xl border border-white/20 bg-card/90 backdrop-blur-xl py-5 shadow-xl">
               <div><strong className="block text-xl sm:text-2xl">{formatStat(stats?.projects ?? 0)}</strong><span className="text-xs text-muted-foreground sm:text-sm">Projets</span></div>
               <div><strong className="block text-xl sm:text-2xl">{formatStat(stats?.profiles ?? 0)}</strong><span className="text-xs text-muted-foreground sm:text-sm">Profils</span></div>
               <div><strong className="block text-xl sm:text-2xl">{formatStat(stats?.investors ?? 0)}</strong><span className="text-xs text-muted-foreground sm:text-sm">Investisseurs</span></div>

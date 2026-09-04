@@ -65,9 +65,14 @@ const PitchRooms = () => {
       </div>
     </header>
     <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-10">
-      <section className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 sm:p-10">
-        <div className="absolute -right-20 -top-24 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-        <div className="relative max-w-3xl"><div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5" /> Rencontres & opportunités</div><h2 className="mt-4 text-3xl sm:text-4xl font-display font-bold tracking-tight">Découvrez les projets qui se présentent en direct.</h2><p className="mt-3 max-w-2xl text-muted-foreground">Assistez aux présentations, panels et échanges de l'écosystème Union'S, puis connectez-vous aux acteurs qui vous intéressent.</p><div className="mt-6 relative max-w-xl"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Rechercher un pitch ou un thème..." value={search} onChange={e => setSearch(e.target.value)} className="h-12 pl-10 bg-background border-border" /></div><div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground"><span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary" /> Données issues de l'écosystème Union'S</span></div></div>
+      <section className="relative overflow-hidden rounded-3xl border border-border p-6 sm:p-10">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url(https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=2400&q=80)" }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-black/60 to-black/50" aria-hidden="true" />
+        <div className="relative max-w-3xl"><div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-primary"><Sparkles className="h-3.5 w-3.5" /> Rencontres & opportunités</div><h2 className="mt-4 text-3xl sm:text-4xl font-display font-bold tracking-tight text-white">Découvrez les projets qui se présentent en direct.</h2><p className="mt-3 max-w-2xl text-white/85">Assistez aux présentations, panels et échanges de l'écosystème Union'S, puis connectez-vous aux acteurs qui vous intéressent.</p><div className="mt-6 relative max-w-xl"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Rechercher un pitch ou un thème..." value={search} onChange={e => setSearch(e.target.value)} className="h-12 pl-10 bg-card/95 backdrop-blur-xl border-white/20 shadow-xl" /></div><div className="mt-4 flex flex-wrap gap-2 text-xs text-white/70"><span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-primary" /> Données issues de l'écosystème Union'S</span></div></div>
       </section>
       {liveRooms.length > 0 && <RoomSection title="En direct maintenant" icon={<Radio className="h-5 w-5 text-red-500 animate-pulse" />} rooms={liveRooms} navigate={navigate} />}
       <RoomSection title="Programmées" icon={<Calendar className="h-5 w-5 text-primary" />} rooms={scheduledRooms} navigate={navigate} loading={loading} />

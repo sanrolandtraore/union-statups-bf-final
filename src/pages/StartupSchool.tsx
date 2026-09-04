@@ -64,17 +64,22 @@ const StartupSchool = () => {
   return <div className="min-h-screen bg-background"><Navbar />
     <main>
       <section className="relative overflow-hidden border-b border-border/60 pt-28 pb-16 sm:pt-32 sm:pb-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,hsl(var(--primary)/.14),transparent_35%)]" />
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url(https://images.unsplash.com/photo-1531973576160-7125cd663d86?auto=format&fit=crop&w=2400&q=80)" }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-background" aria-hidden="true" />
         <div className="container relative mx-auto px-4 sm:px-6">
-          <BackButton fallbackTo="/dashboard" />
+          <BackButton fallbackTo="/dashboard" className="mb-6 text-white/90 hover:text-white hover:bg-white/10" />
           <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="outline" className="mb-5 border-primary/30 bg-primary/5 px-4 py-1.5 text-primary"><GraduationCap className="mr-2 h-4 w-4" />{t("school.badge")}</Badge>
-            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">{t("school.heroTitle")} <span className="text-gradient-gold">{t("school.heroHighlight")}</span></h1>
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">{t("school.heroDesc")}</p>
-            <div className="mx-auto mt-7 flex max-w-xl items-center rounded-xl border border-border bg-card p-1.5 shadow-sm"><Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("school.searchMentors")} className="h-11 border-0 bg-transparent shadow-none focus-visible:ring-0" /><Button onClick={() => document.getElementById("mentors")?.scrollIntoView({ behavior: "smooth" })} className="hidden sm:inline-flex bg-gradient-gold text-primary-foreground">Rechercher</Button></div>
-            <div className="mt-6 flex flex-wrap justify-center gap-3"><Button size="lg" className="bg-gradient-gold text-primary-foreground" onClick={handleJoin}>{session ? t("school.ctaMentors") : t("school.quickAccessBtn")}</Button><Button size="lg" variant="outline" onClick={() => document.getElementById("programs")?.scrollIntoView({ behavior: "smooth" })}>Découvrir les programmes <ArrowRight className="ml-2 h-4 w-4" /></Button></div>
+            <Badge variant="outline" className="mb-5 border-primary/40 bg-white/10 backdrop-blur-sm px-4 py-1.5 text-primary"><GraduationCap className="mr-2 h-4 w-4" />{t("school.badge")}</Badge>
+            <h1 className="font-display text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">{t("school.heroTitle")} <span className="text-gradient-gold">{t("school.heroHighlight")}</span></h1>
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">{t("school.heroDesc")}</p>
+            <div className="mx-auto mt-7 flex max-w-xl items-center rounded-xl border border-white/20 bg-card/95 backdrop-blur-xl p-1.5 shadow-2xl"><Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("school.searchMentors")} className="h-11 border-0 bg-transparent shadow-none focus-visible:ring-0" /><Button onClick={() => document.getElementById("mentors")?.scrollIntoView({ behavior: "smooth" })} className="hidden sm:inline-flex bg-gradient-gold text-primary-foreground">Rechercher</Button></div>
+            <div className="mt-6 flex flex-wrap justify-center gap-3"><Button size="lg" className="bg-gradient-gold text-primary-foreground shadow-lg" onClick={handleJoin}>{session ? t("school.ctaMentors") : t("school.quickAccessBtn")}</Button><Button size="lg" variant="outline" className="border-white/30 bg-white/5 text-white backdrop-blur-sm hover:bg-white/15 hover:text-white" onClick={() => document.getElementById("programs")?.scrollIntoView({ behavior: "smooth" })}>Découvrir les programmes <ArrowRight className="ml-2 h-4 w-4" /></Button></div>
           </div>
-          <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4">{schoolStats.map((s, i) => <div key={i} className="rounded-2xl border border-border bg-card p-5 text-center"><s.icon className="mx-auto mb-2 h-5 w-5 text-primary" /><div className="text-2xl font-bold sm:text-3xl">{s.value}</div><div className="text-xs text-muted-foreground sm:text-sm">{s.label}</div></div>)}</div>
+          <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4">{schoolStats.map((s, i) => <div key={i} className="rounded-2xl border border-white/15 bg-card/90 backdrop-blur-xl p-5 text-center shadow-xl transition-transform hover:-translate-y-0.5"><s.icon className="mx-auto mb-2 h-5 w-5 text-primary" /><div className="text-2xl font-bold sm:text-3xl">{s.value}</div><div className="text-xs text-muted-foreground sm:text-sm">{s.label}</div></div>)}</div>
         </div>
       </section>
 

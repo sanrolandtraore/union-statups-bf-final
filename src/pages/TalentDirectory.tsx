@@ -50,10 +50,16 @@ const TalentDirectory = () => {
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 pb-16 pt-28 sm:px-6 lg:px-8">
         <BackButton fallbackTo="/" />
-        <section className="mb-10 overflow-hidden rounded-3xl border border-border bg-card p-6 sm:p-10">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary"><Sparkles className="h-4 w-4" /> Talents</div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-5xl">Trouvez les talents qui feront avancer votre projet.</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Découvrez les profils disponibles dans l'écosystème Union'S et connectez-vous avec les compétences dont vous avez besoin.</p>
+        <section className="relative mb-10 overflow-hidden rounded-3xl border border-border p-6 sm:p-10">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url(https://images.unsplash.com/photo-1573164574397-dd250bc8a598?auto=format&fit=crop&w=2400&q=80)" }}
+            aria-hidden="true"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/55 to-black/40" aria-hidden="true" />
+          <div className="relative mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary"><Sparkles className="h-4 w-4" /> Talents</div>
+          <h1 className="relative font-display text-3xl font-bold tracking-tight text-white sm:text-5xl">Trouvez les talents qui feront avancer votre projet.</h1>
+          <p className="relative mt-4 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">Découvrez les profils disponibles dans l'écosystème Union'S et connectez-vous avec les compétences dont vous avez besoin.</p>
         </section>
 
         <section className="mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5">
