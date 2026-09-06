@@ -25,6 +25,7 @@ const DueDiligenceTab = lazy(() => import("@/components/dashboard/DueDiligenceTa
 const AdminCreditManagementTab = lazy(() => import("@/components/dashboard/AdminCreditManagementTab"));
 const RecruitmentTab = lazy(() => import("@/components/dashboard/RecruitmentTab"));
 const StartupSchoolLearnTab = lazy(() => import("@/components/dashboard/StartupSchoolLearnTab"));
+const ExpertCasesTab = lazy(() => import("@/components/dashboard/ExpertCasesTab"));
 const IncubationTab = lazy(() => import("@/components/incubation/IncubationTab"));
 
 const TabLoading = () => (
@@ -74,6 +75,7 @@ const Dashboard = () => {
           {activeTab === "admin-credits" && <AdminCreditManagementTab />}
           {activeTab === "recruitment" && <RecruitmentTab />}
           {activeTab === "my-learning" && <StartupSchoolLearnTab />}
+          {activeTab === "expert-cases" && <ExpertCasesTab />}
           {activeTab === "incubation" && (role === "startup" || role === "admin") && <IncubationTab />}
         </Suspense>
         <AIAssistant />

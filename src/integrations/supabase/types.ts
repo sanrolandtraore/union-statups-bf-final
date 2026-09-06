@@ -2984,6 +2984,8 @@ export type Database = {
       }
       service_requests: {
         Row: {
+          assigned_at: string | null
+          assigned_expert_id: string | null
           company_name: string | null
           created_at: string
           email: string
@@ -2996,6 +2998,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_expert_id?: string | null
           company_name?: string | null
           created_at?: string
           email: string
@@ -3008,6 +3012,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          assigned_at?: string | null
+          assigned_expert_id?: string | null
           company_name?: string | null
           created_at?: string
           email?: string
@@ -3020,6 +3026,79 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      service_case_milestones: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          service_request_id: string
+          sort_order: number
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          service_request_id: string
+          sort_order?: number
+          status?: string
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          service_request_id?: string
+          sort_order?: number
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_case_milestones_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_case_notes: {
+        Row: {
+          author_id: string
+          created_at: string
+          id: string
+          note: string
+          service_request_id: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          id?: string
+          note: string
+          service_request_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          service_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_case_notes_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safe_agreements: {
         Row: {

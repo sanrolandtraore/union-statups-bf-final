@@ -150,6 +150,18 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
     });
   }
 
+  // Dossiers d'accompagnement 360° (mentors, partenaires, admin)
+  if (role === "mentor" || role === "partner" || role === "admin") {
+    groups.push({
+      id: "expert",
+      label: "Accompagnement",
+      icon: Briefcase,
+      items: [
+        { id: "expert-cases", label: "Mes dossiers 360°", icon: Briefcase },
+      ],
+    });
+  }
+
   // Admin
   if (role === "admin") {
     groups.push({

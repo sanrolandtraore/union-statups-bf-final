@@ -56,6 +56,7 @@ const AdminTab = () => {
   const [pendingProjects, setPendingProjects] = useState<ProjectRow[]>([]);
   const [pendingProfiles, setPendingProfiles] = useState<ProfileRow[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequestRow[]>([]);
+  const [experts, setExperts] = useState<{ user_id: string; full_name: string }[]>([]);
 
   const [editItem, setEditItem] = useState<EditableItem | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -89,6 +90,13 @@ const AdminTab = () => {
     const { data: pendingProj } = await supabase.from("projects").select("*").eq("moderation_status", "pending").order("created_at", { ascending: false });
     const { data: pendingProf } = await supabase.from("profiles").select("*").eq("is_verified", false).neq("kyc_status", "rejected").order("created_at", { ascending: false }).limit(100);
     const { data: svcReq } = await supabase.from("service_requests").select("*").order("created_at", { ascending: false }).limit(200);
+    const { data: expertRoles } = await supabase.from("user_roles").select("user_id, role").in("role", ["mentor", "partner", "admin"]);
+    if (expertRoles?.length) {
+      const { data: expertProfiles } = await supabase.from("profiles").select("user_id, full_name").in("user_id", expertRoles.map((r) => r.user_id));
+      setExperts((expertProfiles || []).map((p) => ({ user_id: p.user_id, full_name: p.full_name || "Sans nom" })));
+    } else {
+      setExperts([]);
+    }
     setLegalPages(legal || []);
     setBlogPosts(posts || []);
     setBlogCategories(cats || []);
@@ -620,6 +628,26 @@ const AdminTab = () => {
                       {t(`premiumService.types.${r.service_type}`, { defaultValue: r.service_type })}
                     </Badge>
                     {r.message && <p className="mt-2 text-muted-foreground whitespace-pre-wrap">{r.message}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-2.5">
+                    <span className="text-xs text-muted-foreground shrink-0">Expert assigné :</span>
+                    <Select
+                      value={r.assigned_expert_id || ""}
+                      onValueChange={async (expertId) => {
+                        const { error } = await supabase.from("service_requests").update({
+                          assigned_expert_id: expertId, assigned_at: new Date().toISOString(),
+                          status: r.status === "pending" ? "in_progress" : r.status,
+                        }).eq("id", r.id);
+                        if (error) { toast.error(error.message); return; }
+                        toast.success("Expert assigné — le dossier apparaît maintenant dans 'Mes dossiers 360°'");
+                        fetchAll();
+                      }}
+                    >
+                      <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="Choisir un expert" /></SelectTrigger>
+                      <SelectContent>
+                        {experts.map((e) => <SelectItem key={e.user_id} value={e.user_id}>{e.full_name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {r.status !== "in_progress" && (
