@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   server: {
@@ -11,7 +12,78 @@ export default defineConfig({
     },
   },
 
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: "auto",
+      includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
+      manifest: {
+        name: "Union'S — Startup Ecosystem Platform",
+        short_name: "Union'S",
+        description: "L'écosystème de confiance pour les projets, talents et investisseurs en Afrique de l'Ouest.",
+        theme_color: "#F59F0A",
+        background_color: "#FFFFFF",
+        lang: "fr",
+        display: "standalone",
+        orientation: "portrait",
+        start_url: "/",
+        scope: "/",
+        icons: [
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+          { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        // Ne met en cache QUE les fichiers statiques du build (JS/CSS/
+        // polices/images générées). Aucune donnée applicative.
+        globPatterns: ["**/*.{js,css,html,ico,woff2}"],
+        runtimeCaching: [
+          {
+            // Supabase (API REST, Storage, Edge Functions) : jamais mis en
+            // cache. Un solde de crédits, un message ou une session périmés
+            // servis hors-ligne seraient pires qu'une erreur réseau claire.
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: "NetworkOnly",
+          },
+          {
+            // Paiement CinetPay : jamais mis en cache.
+            urlPattern: /^https:\/\/api-checkout\.cinetpay\.com\/.*/i,
+            handler: "NetworkOnly",
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "StaleWhileRevalidate",
+            options: { cacheName: "google-fonts-stylesheets" },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-webfonts",
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Photos de fond (Unsplash) : statiques, sûres à mettre en cache.
+            urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "hero-images",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+      devOptions: {
+        enabled: false,
+      },
+    }),
+  ],
 
   resolve: {
     alias: {
