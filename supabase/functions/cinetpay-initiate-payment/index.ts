@@ -39,6 +39,26 @@ serve(async (req) => {
     const { packageId, returnUrl } = await req.json();
     if (!packageId) throw new Error("packageId requis");
 
+    // Anti open-redirect : n'accepte returnUrl QUE si son origine
+    // correspond exactement à APP_URL (configuré) ou à l'Origin de la
+    // requête — jamais un domaine arbitraire fourni par le client.
+    const configuredAppUrl = (Deno.env.get("APP_URL") || "").replace(/\/$/, "");
+    const requestOrigin = (req.headers.get("origin") || "").replace(/\/$/, "");
+    const allowedOrigins = [configuredAppUrl, requestOrigin].filter((o) => o && /^https:\/\//i.test(o));
+
+    let safeReturnUrl = "";
+    if (typeof returnUrl === "string") {
+      try {
+        const parsed = new URL(returnUrl);
+        if (allowedOrigins.includes(parsed.origin)) safeReturnUrl = returnUrl;
+      } catch { /* URL invalide, ignorée */ }
+    }
+    if (!safeReturnUrl) {
+      const fallbackOrigin = configuredAppUrl || requestOrigin;
+      if (!fallbackOrigin) throw new Error("APP_URL non configuré et aucune origine de requête disponible");
+      safeReturnUrl = `${fallbackOrigin}/credits/buy`;
+    }
+
     const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: pkg } = await supabase.from("credit_packages").select("*").eq("id", packageId).eq("is_active", true).maybeSingle();
@@ -75,7 +95,7 @@ serve(async (req) => {
         customer_surname: fullName.slice(1).join(" ") || "Union'S",
         customer_email: user?.email || "contact@union-s.com",
         notify_url: notifyUrl,
-        return_url: returnUrl || supabaseUrl,
+        return_url: safeReturnUrl,
         channels: "ALL",
         metadata: JSON.stringify({ user_id: userId, package_id: pkg.id }),
       }),

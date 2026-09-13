@@ -10,14 +10,15 @@ async function createLiveKitToken(
   apiKey: string, apiSecret: string, roomName: string,
   participantIdentity: string, participantName: string,
   canPublish: boolean, canSubscribe: boolean, isAdmin: boolean,
+  canPublishData: boolean,
 ) {
   const header = { alg: "HS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
   const payload: Record<string, unknown> = {
     iss: apiKey, sub: participantIdentity, name: participantName,
-    nbf: now, exp: now + 3600 * 6, jti: participantIdentity,
+    nbf: now, exp: now + 3600 * 2, jti: participantIdentity,
     video: {
-      room: roomName, roomJoin: true, canPublish, canSubscribe, canPublishData: true,
+      room: roomName, roomJoin: true, canPublish, canSubscribe, canPublishData,
       ...(isAdmin ? { roomAdmin: true, roomCreate: true, canUpdateOwnMetadata: true } : {}),
     },
   };
@@ -164,6 +165,16 @@ serve(async (req) => {
 
     // ─── CREATE ROOM & AUTO-START RECORDING ───
     if (action === "create_room" && isCreator) {
+      // Idempotence (F3) : si la room est déjà live, ne pas relancer un
+      // enregistrement en parallèle — l'egress précédent ne serait jamais
+      // arrêté (orphelin facturé indéfiniment) et son ID serait perdu.
+      if (room.status === "live" && room.livekit_room_name) {
+        const lkToken = await createLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, room.livekit_room_name, userId, participantName, true, true, true, true);
+        return new Response(JSON.stringify({ token: lkToken, url: LIVEKIT_URL, roomName: room.livekit_room_name, recording: room.is_recording, already_live: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const livekitRoomName = `pitch-${room.id}`;
       let egressId: string | null = null;
       let recordingFilepath: string | null = null;
@@ -189,8 +200,8 @@ serve(async (req) => {
         can_publish_audio: true, can_publish_video: true,
       }, { onConflict: "room_id,user_id" });
 
-      const lkToken = await createLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, livekitRoomName, userId, participantName, true, true, true);
-      return new Response(JSON.stringify({ token: lkToken, url: LIVEKIT_URL, roomName: livekitRoomName, recording: !!egressId }), {
+      const lkToken = await createLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, livekitRoomName, userId, participantName, true, true, true, true);
+      return new Response(JSON.stringify({ token: lkToken, url: LIVEKIT_URL, roomName: livekitRoomName, recording: !!egressId, already_live: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -233,7 +244,7 @@ serve(async (req) => {
         can_publish_audio: canPublish, can_publish_video: canPublish,
       }, { onConflict: "room_id,user_id" });
 
-      const lkToken = await createLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, livekitRoomName, userId, participantName, canPublish, true, isCreator);
+      const lkToken = await createLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, livekitRoomName, userId, participantName, canPublish, true, isCreator, canPublish);
       return new Response(JSON.stringify({ token: lkToken, url: LIVEKIT_URL, roomName: livekitRoomName }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

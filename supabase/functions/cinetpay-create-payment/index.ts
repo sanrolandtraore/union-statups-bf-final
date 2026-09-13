@@ -70,11 +70,16 @@ Deno.serve(async (req) => {
     const origin = (req.headers.get("origin") || "").replace(/\/$/, "");
 
     let safeReturnUrl = "";
-    if (typeof return_url === "string" && /^https:\/\//i.test(return_url)) {
-      safeReturnUrl = return_url;
-    } else if (configuredAppUrl) {
+    if (typeof return_url === "string") {
+      try {
+        const parsed = new URL(return_url);
+        const allowedOrigins = [configuredAppUrl, origin].filter((o) => o && /^https:\/\//i.test(o));
+        if (allowedOrigins.includes(parsed.origin)) safeReturnUrl = return_url;
+      } catch { /* URL invalide, ignorée */ }
+    }
+    if (!safeReturnUrl && configuredAppUrl) {
       safeReturnUrl = `${configuredAppUrl}/dashboard?payment=return`;
-    } else if (origin && /^https:\/\//i.test(origin)) {
+    } else if (!safeReturnUrl && origin && /^https:\/\//i.test(origin)) {
       safeReturnUrl = `${origin}/dashboard?payment=return`;
     }
 

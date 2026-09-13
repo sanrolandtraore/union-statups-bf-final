@@ -69,10 +69,23 @@ serve(async (req) => {
       if (!recipientId) throw new Error("recipientId requis");
       if (recipientId === userId) throw new Error("Impossible de s'appeler soi-même");
 
+      // Expire automatiquement les appels 'pending' de plus de 2 minutes
+      // (personne ne répond indéfiniment à une sonnerie) — évite qu'une
+      // paire d'utilisateurs reste bloquée par l'index anti-doublon.
+      const staleThreshold = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      await adminSupabase.from("private_calls")
+        .update({ status: "missed" })
+        .eq("status", "pending")
+        .lt("requested_at", staleThreshold)
+        .or(`initiator_id.eq.${userId},recipient_id.eq.${userId}`);
+
       const { data: call, error } = await adminSupabase.from("private_calls").insert({
         initiator_id: userId, recipient_id: recipientId, status: "pending",
       }).select().single();
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505") throw new Error("Un appel est déjà en attente avec cette personne.");
+        throw error;
+      }
 
       return new Response(JSON.stringify({ success: true, call }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -10,6 +10,7 @@ const GEMINI_MODEL = "gemini-3.6-flash";
 const geminiUrl = (key: string) => `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
 
 const MAX_PDF_BASE64_LEN = 27_000_000; // ~20 Mo décodé, marge pour l'encodage base64
+const PITCH_COACH_COST = 20;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -57,6 +58,17 @@ serve(async (req) => {
         status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Client service role disponible dès maintenant : nécessaire pour
+    // rembourser les crédits si une étape échoue après le débit (F2).
+    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const refundOnFailure = async (reason: string) => {
+      try {
+        await supabase.rpc("refund_credits", { p_user_id: userId, p_amount: PITCH_COACH_COST, p_reason: reason });
+      } catch (e) {
+        console.error("Échec du remboursement automatique:", e);
+      }
+    };
 
     const systemPrompt = `Tu es un expert en évaluation de pitch decks pour investisseurs early-stage en Afrique de l'Ouest. Analyse le pitch deck fourni (document PDF) et évalue-le de façon rigoureuse et constructive.
 
@@ -114,24 +126,31 @@ Fournis aussi : 3 à 5 points forts (strengths), 3 à 5 points faibles (weakness
     if (!response.ok) {
       const errText = await response.text();
       console.error("Gemini API error:", response.status, errText);
+      await refundOnFailure(`Gemini API error: ${response.status}`);
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Trop de requêtes, réessayez dans un moment." }), {
+        return new Response(JSON.stringify({ error: "Trop de requêtes, réessayez dans un moment. Vos crédits ont été remboursés." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error("Gemini API error");
+      return new Response(JSON.stringify({ error: "Erreur du service d'analyse. Vos crédits ont été remboursés." }), {
+        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiData = await response.json();
     const functionCallPart = aiData.candidates?.[0]?.content?.parts?.find((p: { functionCall?: unknown }) => p.functionCall);
-    if (!functionCallPart) throw new Error("Impossible d'analyser ce PDF (vérifiez qu'il s'agit bien d'un pitch deck lisible).");
+    if (!functionCallPart) {
+      await refundOnFailure("PDF illisible ou réponse IA invalide");
+      return new Response(JSON.stringify({ error: "Impossible d'analyser ce PDF (vérifiez qu'il s'agit bien d'un pitch deck lisible). Vos crédits ont été remboursés." }), {
+        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const args = functionCallPart.functionCall.args;
     const scores = [args.problem_clarity, args.market_size, args.business_model, args.team_strength, args.traction, args.ask_clarity, args.storytelling];
     // Chaque critère est noté sur ~14 points par l'IA → somme directe, plafonnée à 100
     const total = Math.min(100, Math.max(0, Math.round(scores.reduce((a: number, b: number) => a + Number(b), 0))));
 
-    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     let storagePath: string | null = null;
     try {
       const bytes = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0));
@@ -160,7 +179,10 @@ Fournis aussi : 3 à 5 points forts (strengths), 3 à 5 points faibles (weakness
       summary: args.summary || "",
     }).select().single();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      await refundOnFailure("Échec d'enregistrement du résultat");
+      throw insertError;
+    }
 
     return new Response(JSON.stringify({ audit: auditRow }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
