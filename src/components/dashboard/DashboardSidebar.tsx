@@ -44,7 +44,10 @@ const getSidebarGroups = (role: string | null, t: (key: string) => string): Side
     items: [
       { id: "home", label: "Accueil", icon: LayoutDashboard },
       { id: "profile", label: t("dashboard.profile"), icon: UserCircle },
-      { id: "my-learning", label: "Mes formations", icon: GraduationCap },
+      // Startup School réservée aux startups et mentors
+      ...(role === "startup" || role === "mentor" || role === "admin"
+        ? [{ id: "my-learning" as DashboardTab, label: "Mes formations", icon: GraduationCap }]
+        : []),
       { id: "settings", label: t("dashboard.settings"), icon: Settings },
     ],
   };

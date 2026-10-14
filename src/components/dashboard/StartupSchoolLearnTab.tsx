@@ -20,7 +20,7 @@ interface QuizResult { score: number; total: number; passed: boolean; results: {
 interface Mentor { id: string; full_name: string; company_name: string | null; specialty: string[] | null; }
 
 const StartupSchoolLearnTab = () => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { toast } = useToast();
   const [enrollments, setEnrollments] = useState<(Enrollment & { program: Program })[]>([]);
   const [modulesByProgram, setModulesByProgram] = useState<Record<string, Module[]>>({});
@@ -129,6 +129,30 @@ const StartupSchoolLearnTab = () => {
   };
 
   if (loading) return <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mt-12" />;
+
+  // La Startup School est réservée aux startups et aux mentors (règle
+  // appliquée aussi au niveau RLS côté serveur — ceci n'est que
+  // l'explication côté interface).
+  const canAccessSchool = role === "startup" || role === "mentor" || role === "admin";
+  if (!canAccessSchool) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-primary" /> Mes formations
+          </h2>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <GraduationCap className="h-10 w-10 mx-auto mb-3 text-muted-foreground opacity-50" />
+          <p className="text-sm font-medium text-foreground">Startup School réservée aux startups et mentors</p>
+          <p className="text-xs text-muted-foreground mt-2 max-w-md mx-auto">
+            Les programmes de la Startup School sont accessibles aux profils Startup (pour se former)
+            et Mentor (pour accompagner). Votre profil actuel ne donne pas accès à ces programmes.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
